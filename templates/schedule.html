@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.schedule_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header">
+        <h1>StuPlan</h1>
+        <p>{{ t.schedule_title }}</p>
+    </header>
+    <main class="container schedule-container">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card schedule-card">
+            <h2>📅 {{ t.schedule_sub }}</h2>
+            <form method="GET" class="search-form">
+                <input type="text" name="keyword" placeholder="{{ t.schedule_search_placeholder }}" value="{{ keyword }}">
+                <button type="submit">{{ t.schedule_search_btn }}</button>
+                {% if keyword %}<a href="/schedule" class="clear-link">{{ t.schedule_clear }}</a>{% endif %}
+            </form>
+            {% if schedules %}
+            <ul class="schedule-list">
+                {% for item in schedules %}
+                <li class="schedule-item">
+                    <span class="schedule-time">{{ item.time }}</span>
+                    <span class="schedule-title">{{ item.title }}</span>
+                    <span class="schedule-place">{{ item.place }}</span>
+                    <a href="/schedule/edit/{{ item.id }}" class="edit-link">{{ t.edit }}</a>
+                    <a href="/schedule/delete/{{ item.id }}" class="delete-link" onclick="return confirm('{{ t.confirm_delete }}');">{{ t.delete }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{% if keyword %}{{ t.schedule_not_found }}{% else %}{{ t.schedule_empty }}{% endif %}</p>
+            {% endif %}
+            <a href="/schedule/add" class="add-link">{{ t.schedule_add }}</a>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

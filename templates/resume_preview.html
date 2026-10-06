@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>履歴書</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Hiragino Mincho ProN", "MS Mincho", serif;
+            font-size: 11px;
+            background: #f0f0f0;
+        }
+
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .resume { box-shadow: none; margin: 0; }
+            @page { margin: 10mm; size: A4; }
+        }
+
+        .btn-area {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 999;
+        }
+
+        .btn-print {
+            background: #2e8b57;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: sans-serif;
+        }
+
+        .btn-back {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: sans-serif;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .resume {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 60px auto 30px;
+            padding: 12mm;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+        }
+
+        .resume-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 10px;
+            margin-bottom: 6px;
+        }
+
+        .resume-date {
+            text-align: right;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        td {
+            border: 1px solid #555;
+            padding: 5px 7px;
+            vertical-align: middle;
+            font-size: 11px;
+        }
+
+        .label {
+            background: #f0f0f0;
+            font-weight: bold;
+            white-space: nowrap;
+            width: 18%;
+            font-size: 10px;
+            color: #333;
+        }
+
+        /* セクションタイトル：黒い太い帯ではなく、シンプルな細い線 */
+        .section-title {
+            background: #f8f8f8;
+            color: #333;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 5px;
+            border: 1px solid #555;
+            letter-spacing: 4px;
+        }
+
+        .text-area {
+            height: 70px;
+            vertical-align: top;
+            padding: 5px;
+            border: 1px solid #555;
+        }
+
+        .text-area-large {
+            height: 90px;
+            vertical-align: top;
+            padding: 5px;
+            border: 1px solid #555;
+        }
+
+        .name-big {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px;
+            height: 36px;
+        }
+
+        .photo-box {
+            width: 85px;
+            height: 108px;
+            border: 1px solid #555;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 9px;
+            color: #aaa;
+            line-height: 1.8;
+        }
+
+        .empty-cell {
+            height: 28px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="btn-area no-print">
+        <a href="/resume" class="btn-back">← 戻る</a>
+        <button class="btn-print" onclick="window.print()">🖨️ PDFで保存</button>
+    </div>
+
+    <div class="resume">
+
+        <div class="resume-title">履　歴　書</div>
+        <div class="resume-date">記入日：　　　年　　月　　日</div>
+
+        <table>
+            <tr>
+                <td class="label">ふりがな</td>
+                <td colspan="3" class="empty-cell"></td>
+                <td class="photo-box" rowspan="5">
+                    写真を<br>貼る場所<br>（3×4cm）
+                </td>
+            </tr>
+            <tr>
+                <td class="label">氏名</td>
+                <td class="name-big" colspan="3"></td>
+            </tr>
+            <tr>
+                <td class="label">生年月日</td>
+                <td class="empty-cell"></td>
+                <td class="label">性別</td>
+                <td class="empty-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">現住所</td>
+                <td colspan="3" class="empty-cell">〒</td>
+            </tr>
+            <tr>
+                <td class="label">電話番号</td>
+                <td class="empty-cell"></td>
+                <td class="label">メール</td>
+                <td class="empty-cell"></td>
+            </tr>
+        </table>
+
+        <table style="margin-top:6px;">
+            <tr><td class="section-title" colspan="2">学　　歴</td></tr>
+            <tr><td class="text-area-large" colspan="2"></td></tr>
+        </table>
+
+        <table style="margin-top:4px;">
+            <tr><td class="section-title" colspan="2">職歴・アルバイト歴</td></tr>
+            <tr><td class="text-area" colspan="2"></td></tr>
+        </table>
+
+        <table style="margin-top:4px;">
+            <tr><td class="section-title" colspan="2">志　望　動　機</td></tr>
+            <tr><td class="text-area-large" colspan="2"></td></tr>
+        </table>
+
+        <table style="margin-top:4px;">
+            <tr><td class="section-title" colspan="2">特技・スキル</td></tr>
+            <tr><td class="text-area" colspan="2"></td></tr>
+        </table>
+
+        <table style="margin-top:4px;">
+            <tr><td class="section-title" colspan="2">自　己　Ｐ　Ｒ</td></tr>
+            <tr><td class="text-area-large" colspan="2"></td></tr>
+        </table>
+
+    </div>
+
+</body>
+</html>

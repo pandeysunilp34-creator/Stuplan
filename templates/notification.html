@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.notification_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.notification_title }}</p></header>
+    <main class="container schedule-container">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card schedule-card">
+            <h2>🔔 {{ t.notification_sub }}</h2>
+            {% if notifications %}
+            <ul class="notification-list">
+                {% for n in notifications %}
+                <li class="notification-item">
+                    <span class="notification-type">{{ n.type }}</span>
+                    <div class="notification-info">
+                        <span class="notification-message">{{ n.message }}</span>
+                        <span class="notification-time">{{ n.time }}</span>
+                    </div>
+                    <a href="/notification/delete/{{ n.id }}" class="delete-link" onclick="return confirm('{{ t.confirm_delete }}');">{{ t.delete }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{{ t.notification_empty }}</p>
+            {% endif %}
+            <a href="/notification/add" class="add-link">{{ t.notification_add }}</a>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

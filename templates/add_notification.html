@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.notification_add_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.notification_add_title }}</p></header>
+    <main class="container schedule-container">
+        <a href="/notification" class="back-link">← {{ t.notification_title }}</a>
+        <section class="card schedule-card">
+            <h2>🔔 {{ t.notification_add_title }}</h2>
+            <form method="POST" class="add-form">
+                <label>{{ t.type }}</label>
+                <select name="type" required style="padding:10px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem;">
+                    <option value="宿題">{% if t.subject %}{{ t.subject }}{% else %}宿題{% endif %}</option>
+                    <option value="授業">{% if t.schedule_title %}{{ t.schedule_title }}{% else %}授業{% endif %}</option>
+                    <option value="アルバイト">{% if t.parttime_title %}{{ t.parttime_title }}{% else %}アルバイト{% endif %}</option>
+                    <option value="その他">Other</option>
+                </select>
+                <label>{{ t.message }}</label>
+                <input type="text" name="message" placeholder="{{ t.message_placeholder }}" required>
+                <label>{{ t.time_ago }}</label>
+                <input type="text" name="time" placeholder="{{ t.time_placeholder2 }}" required>
+                <button type="submit">{{ t.add }}</button>
+            </form>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

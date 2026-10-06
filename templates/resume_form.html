@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - 履歴書</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .resume-form-container {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .form-section h3 {
+            color: #2e8b57;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2e8b57;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .form-group label {
+            font-size: 0.8rem;
+            color: #2e8b57;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #2e8b57;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            background-color: #246b44;
+        }
+        .error-msg {
+            color: #c0392b;
+            font-size: 0.8rem;
+            margin-top: 3px;
+            display: none;
+        }
+        .input-error { border-color: #c0392b !important; }
+        .input-ok { border-color: #2e8b57 !important; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <h1>StuPlan</h1>
+        <p>履歴書作成</p>
+    </header>
+
+    <div class="resume-form-container">
+        <a href="/home" class="back-link">← Home</a>
+
+        <form method="POST" id="resumeForm">
+
+            <!-- 基本情報 -->
+            <div class="form-section">
+                <h3>👤 基本情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>氏名（漢字・カタカナ）</label>
+                        <input type="text" name="name" id="name"
+                            value="{{ data.get('name', '') }}"
+                            placeholder="例：パンデイ スニル" required>
+                    </div>
+                    <div class="form-group">
+                        <label>フリガナ</label>
+                        <input type="text" name="name_kana" id="name_kana"
+                            value="{{ data.get('name_kana', '') }}"
+                            placeholder="自動で入力されます">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>生年月日</label>
+                        <input type="date" name="birthday"
+                            value="{{ data.get('birthday', '') }}">
+                    </div>
+                    <div class="form-group">
+                        <label>性別</label>
+                        <select name="gender">
+                            <option value="男" {% if data.get('gender') == '男' %}selected{% endif %}>男</option>
+                            <option value="女" {% if data.get('gender') == '女' %}selected{% endif %}>女</option>
+                            <option value="その他" {% if data.get('gender') == 'その他' %}selected{% endif %}>その他</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 連絡先 -->
+            <div class="form-section">
+                <h3>📞 連絡先</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>住所</label>
+                        <input type="text" name="address"
+                            value="{{ data.get('address', '') }}"
+                            placeholder="例：福岡県福岡市○○区1-2-3">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>電話番号</label>
+                        <input type="text" name="phone" id="phone"
+                            value="{{ data.get('phone', '') }}"
+                            placeholder="例：090-1234-5678" maxlength="13">
+                        <span class="error-msg" id="phone-error">正しい形式で入力してください（例：090-1234-5678）</span>
+                    </div>
+                    <div class="form-group">
+                        <label>メールアドレス</label>
+                        <input type="text" name="email" id="email"
+                            value="{{ data.get('email', '') }}"
+                            placeholder="例：sunil@example.com">
+                        <span class="error-msg" id="email-error">正しいメールアドレスを入力してください</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学歴 -->
+            <div class="form-section">
+                <h3>🎓 学歴</h3>
+                <div class="form-group">
+                    <label>学歴（年月・学校名・学科名の順で入力）</label>
+                    <textarea name="education" placeholder="例：
+2023年4月　富士日本語学校　入学
+2025年3月　富士日本語学校　卒業
+2025年4月　九州情報大学　情報工学科　入学">{{ data.get('education', '') }}</textarea>
+                </div>
+            </div>
+
+            <!-- 職歴 -->
+            <div class="form-section">
+                <h3>💼 職歴・アルバイト歴</h3>
+                <div class="form-group">
+                    <label>職歴・アルバイト歴</label>
+                    <textarea name="work" placeholder="例：
+2023年6月　コンビニエンスストア○○　アルバイト（現在に至る）">{{ data.get('work', '') }}</textarea>
+                </div>
+            </div>
+
+            <!-- 志望動機・自己PR -->
+            <div class="form-section">
+                <h3>📝 志望動機・自己PR</h3>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>志望動機</label>
+                    <textarea name="motivation" placeholder="例：AIやWebアプリの開発に興味があり...">{{ data.get('motivation', '') }}</textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>特技・スキル</label>
+                    <textarea name="skills" placeholder="例：Python・Flask・SQLite・HTML/CSS・日本語（N3）">{{ data.get('skills', '') }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>自己PR</label>
+                    <textarea name="pr" placeholder="例：私はネパール出身の留学生で...">{{ data.get('pr', '') }}</textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">📄 履歴書プレビューを見る →</button>
+
+        </form>
+    </div>
+
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+
+    <script>
+        // 電話番号の自動フォーマット
+        const phoneInput = document.getElementById("phone");
+        const phoneError = document.getElementById("phone-error");
+        phoneInput.addEventListener("input", function () {
+            let val = this.value.replace(/[^0-9]/g, "");
+            if (val.length <= 3) this.value = val;
+            else if (val.length <= 7) this.value = val.slice(0,3) + "-" + val.slice(3);
+            else this.value = val.slice(0,3) + "-" + val.slice(3,7) + "-" + val.slice(7,11);
+            const ok = /^\d{2,4}-\d{2,4}-\d{4}$/.test(this.value);
+            this.classList.toggle("input-error", this.value && !ok);
+            this.classList.toggle("input-ok", this.value && ok);
+            phoneError.style.display = (this.value && !ok) ? "block" : "none";
+        });
+
+        // メールアドレスのバリデーション
+        const emailInput = document.getElementById("email");
+        const emailError = document.getElementById("email-error");
+        emailInput.addEventListener("blur", function () {
+            const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
+            this.classList.toggle("input-error", this.value && !ok);
+            this.classList.toggle("input-ok", this.value && ok);
+            emailError.style.display = (this.value && !ok) ? "block" : "none";
+        });
+
+        // フリガナの自動入力
+        const nameInput = document.getElementById("name");
+        const nameKana = document.getElementById("name_kana");
+        let composing = false;
+        nameInput.addEventListener("compositionstart", () => composing = true);
+        nameInput.addEventListener("compositionend", function() {
+            composing = false;
+            nameKana.value = this.value.replace(/[\u3041-\u3096]/g, ch =>
+                String.fromCharCode(ch.charCodeAt(0) + 0x60));
+        });
+        nameInput.addEventListener("input", function() {
+            if (!composing) {
+                nameKana.value = this.value.replace(/[\u3041-\u3096]/g, ch =>
+                    String.fromCharCode(ch.charCodeAt(0) + 0x60));
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.parttime_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.parttime_title }}</p></header>
+    <main class="container schedule-container">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card schedule-card">
+            <h2>💼 {{ t.parttime_sub }}</h2>
+            {% if parttime_jobs %}
+            <ul class="parttime-list">
+                {% for job in parttime_jobs %}
+                <li class="parttime-item">
+                    <span class="parttime-date">{{ job.date }}</span>
+                    <span class="parttime-time">{{ job.start }} - {{ job.end }}</span>
+                    <span class="parttime-place">{{ job.place }}</span>
+                    <a href="/parttime/edit/{{ job.id }}" class="edit-link">{{ t.edit }}</a>
+                    <a href="/parttime/delete/{{ job.id }}" class="delete-link" onclick="return confirm('{{ t.confirm_delete }}');">{{ t.delete }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{{ t.parttime_empty }}</p>
+            {% endif %}
+            <a href="/parttime/add" class="add-link">{{ t.parttime_add }}</a>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

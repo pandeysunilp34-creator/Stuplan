@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - 言語選択</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .lang-container {
+            max-width: 480px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .lang-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .lang-title h1 {
+            font-size: 2.5rem;
+            color: #2e8b57;
+            font-weight: bold;
+        }
+
+        .lang-title p {
+            color: #666;
+            margin-top: 8px;
+            font-size: 1rem;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 20px 24px;
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .lang-btn:hover {
+            border-color: #2e8b57;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(46,139,87,0.15);
+        }
+
+        .lang-flag {
+            font-size: 2.2rem;
+        }
+
+        .lang-info {
+            text-align: left;
+        }
+
+        .lang-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .lang-sub {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .lang-arrow {
+            margin-left: auto;
+            color: #2e8b57;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body style="background-color:#f4f7f4;">
+
+    <div class="lang-container">
+
+        <div class="lang-title">
+            <h1>📅 StuPlan</h1>
+            <p>言語を選んでください / Select Language / भाषा छान्नुहोस्</p>
+        </div>
+
+        <a href="/set_language/ja" class="lang-btn">
+            <span class="lang-flag">🇯🇵</span>
+            <div class="lang-info">
+                <div class="lang-name">日本語</div>
+                <div class="lang-sub">Japanese</div>
+            </div>
+            <span class="lang-arrow">→</span>
+        </a>
+
+        <a href="/set_language/en" class="lang-btn">
+            <span class="lang-flag">🇬🇧</span>
+            <div class="lang-info">
+                <div class="lang-name">English</div>
+                <div class="lang-sub">英語</div>
+            </div>
+            <span class="lang-arrow">→</span>
+        </a>
+
+        <a href="/set_language/np" class="lang-btn">
+            <span class="lang-flag">🇳🇵</span>
+            <div class="lang-info">
+                <div class="lang-name">नेपाली</div>
+                <div class="lang-sub">Nepali / ネパール語</div>
+            </div>
+            <span class="lang-arrow">→</span>
+        </a>
+
+    </div>
+
+</body>
+</html>

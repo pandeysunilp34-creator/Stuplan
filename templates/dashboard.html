@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.dashboard_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.dashboard_title }}</p></header>
+    <main class="container dashboard-container">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <div class="dash-date">📅 {{ today_display }}</div>
+        <div class="dash-cards">
+            <div class="dash-card">
+                <div class="dash-card-icon">📝</div>
+                <div class="dash-card-num">{{ homework_undone }}</div>
+                <div class="dash-card-label">{{ t.undone_homework }}</div>
+            </div>
+            <div class="dash-card {% if homework_overdue > 0 %}danger{% endif %}">
+                <div class="dash-card-icon">⚠️</div>
+                <div class="dash-card-num">{{ homework_overdue }}</div>
+                <div class="dash-card-label">{{ t.overdue_homework }}</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-icon">💼</div>
+                <div class="dash-card-num">{{ parttime_count }}</div>
+                <div class="dash-card-label">{{ t.parttime_count }}</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-icon">⏰</div>
+                <div class="dash-card-num">{{ total_hours }}h</div>
+                <div class="dash-card-label">{{ t.total_hours }}</div>
+            </div>
+        </div>
+        <div class="dash-bottom">
+            <section class="card dash-section">
+                <h2>{{ t.todays_schedule }}</h2>
+                {% if schedules %}
+                <ul class="schedule-list">
+                    {% for item in schedules %}
+                    <li class="schedule-item">
+                        <span class="schedule-time">{{ item.time }}</span>
+                        <span class="schedule-title">{{ item.title }}</span>
+                        <span class="schedule-place">{{ item.place }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>{{ t.no_schedule }}</p>
+                {% endif %}
+            </section>
+            <section class="card dash-section">
+                <h2>{{ t.recent_notifications }}</h2>
+                {% if recent_notifications %}
+                <ul class="notification-list">
+                    {% for n in recent_notifications %}
+                    <li class="notification-item">
+                        <span class="notification-type">{{ n.type }}</span>
+                        <div class="notification-info">
+                            <span class="notification-message">{{ n.message }}</span>
+                            <span class="notification-time">{{ n.time }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>{{ t.no_notifications }}</p>
+                {% endif %}
+                <a href="/notification" class="add-link">{{ t.see_all }}</a>
+            </section>
+        </div>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

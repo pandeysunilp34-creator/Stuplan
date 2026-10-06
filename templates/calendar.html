@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.calendar_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.calendar_title }}</p></header>
+    <main class="container schedule-container" style="max-width:700px;">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card">
+            <div class="cal-header">
+                <a href="/calendar?year={{ prev_year }}&month={{ prev_month }}" class="cal-nav">◀</a>
+                <h2>{{ year }}年 {{ month }}月</h2>
+                <a href="/calendar?year={{ next_year }}&month={{ next_month }}" class="cal-nav">▶</a>
+            </div>
+            <table class="cal-table">
+                <thead>
+                    <tr>
+                        {% for day in t.days_of_week %}
+                        <th {% if loop.index == 1 %}class="sun"{% elif loop.index == 7 %}class="sat"{% endif %}>{{ day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in cal %}
+                    <tr>
+                        {% for day in week %}
+                        <td class="cal-day {% if day == 0 %}empty{% endif %} {% if day == today.day and month == today.month and year == today.year %}today{% endif %}">
+                            {% if day != 0 %}
+                            <div class="day-num">{{ day }}</div>
+                            {% if day in events %}
+                            {% for ev in events[day] %}
+                            <div class="cal-event {{ ev.type }}">{{ ev.text }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="cal-legend">
+                <span class="legend-item homework">{{ t.homework_legend }}</span>
+                <span class="legend-item parttime">{{ t.parttime_legend }}</span>
+            </div>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

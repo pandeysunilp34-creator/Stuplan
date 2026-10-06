@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>StuPlan</h1>
+        <p>
+            {% if lang == 'en' %}Register
+            {% elif lang == 'np' %}दर्ता
+            {% else %}新規登録
+            {% endif %}
+        </p>
+    </header>
+
+    <main class="container schedule-container" style="max-width:500px;">
+
+        <a href="/login" class="back-link">
+            {% if lang == 'en' %}← Back to Login
+            {% elif lang == 'np' %}← लगइनमा फर्कनुहोस्
+            {% else %}← ログインに戻る
+            {% endif %}
+        </a>
+
+        <section class="card">
+            <h2>📝
+                {% if lang == 'en' %}Create Account
+                {% elif lang == 'np' %}खाता बनाउनुहोस्
+                {% else %}アカウント作成
+                {% endif %}
+            </h2>
+
+            {% if error %}
+            <p class="auth-error">{{ error }}</p>
+            {% endif %}
+
+            {% if success %}
+            <p class="auth-success">{{ success }}</p>
+            {% endif %}
+
+            <form method="POST" class="add-form">
+                <label>
+                    {% if lang == 'en' %}Username
+                    {% elif lang == 'np' %}प्रयोगकर्ता नाम
+                    {% else %}ユーザー名
+                    {% endif %}
+                </label>
+                <input type="text" name="username"
+                    placeholder="{% if lang == 'en' %}Enter username{% elif lang == 'np' %}प्रयोगकर्ता नाम{% else %}ユーザー名（英数字）{% endif %}"
+                    required>
+
+                <label>
+                    {% if lang == 'en' %}Password
+                    {% elif lang == 'np' %}पासवर्ड
+                    {% else %}パスワード
+                    {% endif %}
+                </label>
+                <input type="password" name="password"
+                    placeholder="{% if lang == 'en' %}Min. 6 characters{% elif lang == 'np' %}कम्तीमा ६ अक्षर{% else %}6文字以上{% endif %}"
+                    required>
+
+                <label>
+                    {% if lang == 'en' %}Confirm Password
+                    {% elif lang == 'np' %}पासवर्ड पुष्टि गर्नुहोस्
+                    {% else %}パスワード（確認）
+                    {% endif %}
+                </label>
+                <input type="password" name="password_confirm"
+                    placeholder="{% if lang == 'en' %}Enter password again{% elif lang == 'np' %}फेरि पासवर्ड{% else %}もう一度パスワードを入力{% endif %}"
+                    required>
+
+                <button type="submit">
+                    {% if lang == 'en' %}Register
+                    {% elif lang == 'np' %}दर्ता गर्नुहोस्
+                    {% else %}登録する
+                    {% endif %}
+                </button>
+            </form>
+
+            <p style="text-align:center; margin-top:20px; font-size:0.9rem; color:#666;">
+                {% if lang == 'en' %}
+                    Already have an account?
+                    <a href="/login" style="color:#2e8b57; font-weight:bold;">Login</a>
+                {% elif lang == 'np' %}
+                    पहिले नै खाता छ?
+                    <a href="/login" style="color:#2e8b57; font-weight:bold;">लगइन</a>
+                {% else %}
+                    すでにアカウントがある場合は
+                    <a href="/login" style="color:#2e8b57; font-weight:bold;">ログイン</a>
+                {% endif %}
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 StuPlan</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.homework_edit_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.homework_edit_title }}</p></header>
+    <main class="container schedule-container">
+        <a href="/homework" class="back-link">← {{ t.homework_title }}</a>
+        <section class="card schedule-card">
+            <h2>📝 {{ t.homework_edit_title }}</h2>
+            <form method="POST" class="add-form">
+                <label>{{ t.subject }}</label>
+                <input type="text" name="subject" value="{{ item.subject }}" required>
+                <label>{{ t.task }}</label>
+                <input type="text" name="task" value="{{ item.task }}" required>
+                <label>{{ t.deadline }}</label>
+                <input type="date" name="deadline" value="{{ item.deadline }}" required>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="done" {% if item.done %}checked{% endif %}>
+                    {{ t.done }}
+                </label>
+                <button type="submit">{{ t.save }}</button>
+            </form>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

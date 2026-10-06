@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.graph_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.graph_title }}</p></header>
+    <main class="container schedule-container" style="max-width:750px;">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card" style="margin-bottom:20px;">
+            <h2>{{ t.homework_status }}</h2>
+            <div style="max-width:300px; margin:20px auto;">
+                <canvas id="homeworkChart"></canvas>
+            </div>
+            <div class="graph-legend">
+                <span class="legend-dot" style="background:#2e8b57;"></span>{{ t.completed }}：{{ homework_done }}
+                <span class="legend-dot" style="background:#f0a500;"></span>{{ t.uncompleted }}：{{ homework_undone }}
+                <span class="legend-dot" style="background:#c0392b;"></span>{{ t.overdue }}：{{ homework_overdue }}
+            </div>
+        </section>
+        <section class="card">
+            <h2>{{ t.parttime_hours_title }}</h2>
+            {% if parttime_labels %}
+            <div style="margin:20px 0;"><canvas id="parttimeChart"></canvas></div>
+            <p style="text-align:center; font-size:0.9rem; color:#2e8b57; font-weight:bold;">
+                {{ t.total_hours_label }}：{{ total_hours }}{{ t.hours }}
+            </p>
+            {% else %}
+            <p style="margin-top:15px;">{{ t.no_parttime }}</p>
+            {% endif %}
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+    <script>
+        const homeworkCtx = document.getElementById('homeworkChart').getContext('2d');
+        new Chart(homeworkCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['{{ t.completed }}', '{{ t.uncompleted }}', '{{ t.overdue }}'],
+                datasets: [{ data: [{{ homework_done }}, {{ homework_undone }}, {{ homework_overdue }}], backgroundColor: ['#2e8b57', '#f0a500', '#c0392b'], borderWidth: 2 }]
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
+        {% if parttime_labels %}
+        const parttimeCtx = document.getElementById('parttimeChart').getContext('2d');
+        new Chart(parttimeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ parttime_labels | tojson }},
+                datasets: [{ label: '{{ t.hours }}', data: {{ parttime_hours | tojson }}, backgroundColor: '#2e8b57', borderRadius: 6 }]
+            },
+            options: { scales: { y: { beginAtZero: true, title: { display: true, text: '{{ t.hours }}' } } }, plugins: { legend: { display: false } } }
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

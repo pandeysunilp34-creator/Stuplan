@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.ai_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.ai_title }}</p></header>
+    <main class="container schedule-container" style="max-width:650px;">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card">
+            <h2>🤖 {{ t.ai_sub }}</h2>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:20px;">{{ t.ai_desc }}</p>
+            <ul class="ai-list">
+                {% for s in suggestions %}
+                <li class="ai-item ai-{{ s.level }}">
+                    <span class="ai-icon">{{ s.icon }}</span>
+                    <span class="ai-message">{{ s.message }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div style="margin-top:24px; padding-top:16px; border-top:1px solid #eee;">
+                <p style="font-size:0.85rem; color:#999; text-align:center;">{{ t.ai_note }}</p>
+                <div style="text-align:center; margin-top:12px;">
+                    <a href="/ai" style="display:inline-block; background:#2e8b57; color:white; padding:10px 24px; border-radius:8px; text-decoration:none; font-size:0.9rem;">{{ t.ai_refresh }}</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

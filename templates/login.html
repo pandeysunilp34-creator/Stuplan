@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>StuPlan</h1>
+        <p>
+            {% if lang == 'en' %}Login
+            {% elif lang == 'np' %}लगइन
+            {% else %}ログイン
+            {% endif %}
+        </p>
+    </header>
+
+    <main class="container schedule-container" style="max-width:500px;">
+
+        <a href="/" class="back-link">
+            {% if lang == 'en' %}← Change Language
+            {% elif lang == 'np' %}← भाषा परिवर्तन
+            {% else %}← 言語を変える
+            {% endif %}
+        </a>
+
+        <section class="card">
+            <h2>🔐
+                {% if lang == 'en' %}Login
+                {% elif lang == 'np' %}लगइन
+                {% else %}ログイン
+                {% endif %}
+            </h2>
+
+            {% if error %}
+            <p class="auth-error">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST" class="add-form">
+                <label>
+                    {% if lang == 'en' %}Username
+                    {% elif lang == 'np' %}प्रयोगकर्ता नाम
+                    {% else %}ユーザー名
+                    {% endif %}
+                </label>
+                <input type="text" name="username"
+                    placeholder="{% if lang == 'en' %}Enter username{% elif lang == 'np' %}प्रयोगकर्ता नाम{% else %}ユーザー名を入力{% endif %}"
+                    required>
+
+                <label>
+                    {% if lang == 'en' %}Password
+                    {% elif lang == 'np' %}पासवर्ड
+                    {% else %}パスワード
+                    {% endif %}
+                </label>
+                <input type="password" name="password"
+                    placeholder="{% if lang == 'en' %}Enter password{% elif lang == 'np' %}पासवर्ड{% else %}パスワードを入力{% endif %}"
+                    required>
+
+                <button type="submit">
+                    {% if lang == 'en' %}Login
+                    {% elif lang == 'np' %}लगइन
+                    {% else %}ログイン
+                    {% endif %}
+                </button>
+            </form>
+
+            <p style="text-align:center; margin-top:20px; font-size:0.9rem; color:#666;">
+                {% if lang == 'en' %}
+                    Don't have an account?
+                    <a href="/register" style="color:#2e8b57; font-weight:bold;">Register</a>
+                {% elif lang == 'np' %}
+                    खाता छैन?
+                    <a href="/register" style="color:#2e8b57; font-weight:bold;">दर्ता गर्नुहोस्</a>
+                {% else %}
+                    アカウントがない場合は
+                    <a href="/register" style="color:#2e8b57; font-weight:bold;">新規登録</a>
+                {% endif %}
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 StuPlan</p>
+    </footer>
+
+</body>
+</html>

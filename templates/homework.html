@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - {{ t.homework_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="main-header"><h1>StuPlan</h1><p>{{ t.homework_title }}</p></header>
+    <main class="container schedule-container">
+        <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <section class="card schedule-card">
+            <h2>📝 {{ t.homework_sub }}</h2>
+            {% if homeworks %}
+            <ul class="homework-list">
+                {% for item in homeworks %}
+                <li class="homework-item {% if item.done %}done{% endif %}">
+                    <span class="homework-status">{% if item.done %}✅{% else %}⬜{% endif %}</span>
+                    <div class="homework-info">
+                        <span class="homework-subject">{{ item.subject }}</span>
+                        <span class="homework-task">{{ item.task }}</span>
+                    </div>
+                    {% if item.overdue %}<span class="overdue-badge">{{ t.overdue }}</span>{% endif %}
+                    <span class="homework-deadline">{{ item.deadline }}</span>
+                    <a href="/homework/edit/{{ item.id }}" class="edit-link">{{ t.edit }}</a>
+                    <a href="/homework/delete/{{ item.id }}" class="delete-link" onclick="return confirm('{{ t.confirm_delete }}');">{{ t.delete }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{{ t.homework_empty }}</p>
+            {% endif %}
+            <a href="/homework/add" class="add-link">{{ t.homework_add }}</a>
+        </section>
+    </main>
+    <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+</body>
+</html>

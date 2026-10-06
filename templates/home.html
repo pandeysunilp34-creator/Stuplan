@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>StuPlan</h1>
+        <p>Student + Plan</p>
+        {% if session.username %}
+        <div class="user-info">
+            <span>👤 {{ session.username }}</span>
+            <a href="/logout">
+                {% if lang == 'en' %}Logout
+                {% elif lang == 'np' %}लगआउट
+                {% else %}ログアウト
+                {% endif %}
+            </a>
+        </div>
+        {% endif %}
+    </header>
+
+    <main class="container">
+
+        <a href="/schedule" class="card-link">
+            <section class="card">
+                <h2>📅 {% if lang == 'en' %}Schedule{% elif lang == 'np' %}तालिका{% else %}Schedule{% endif %}</h2>
+                <p>{% if lang == 'en' %}Check today's schedule{% elif lang == 'np' %}आजको तालिका{% else %}今日の予定を確認する{% endif %}</p>
+                <span class="count-badge">{{ schedule_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+            </section>
+        </a>
+
+        <a href="/homework" class="card-link">
+            <section class="card">
+                <h2>📝 Homework</h2>
+                <p>{% if lang == 'en' %}Check homework list{% elif lang == 'np' %}गृहकार्य सूची{% else %}宿題の一覧を確認する{% endif %}</p>
+                <span class="count-badge">{% if lang == 'en' %}Pending {% elif lang == 'np' %}बाँकी {% else %}未完了 {% endif %}{{ homework_count }}{% if lang == 'en' %}{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+            </section>
+        </a>
+
+        <a href="/parttime" class="card-link">
+            <section class="card">
+                <h2>💼 Part-time Job</h2>
+                <p>{% if lang == 'en' %}Check shift schedule{% elif lang == 'np' %}काम समय{% else %}シフトの予定を確認する{% endif %}</p>
+                <span class="count-badge">{{ parttime_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+            </section>
+        </a>
+
+        <a href="/notification" class="card-link">
+            <section class="card">
+                <h2>🔔 Notification</h2>
+                <p>{% if lang == 'en' %}Check notifications{% elif lang == 'np' %}सूचनाहरू{% else %}通知を確認する{% endif %}</p>
+                <span class="count-badge">{{ notification_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+            </section>
+        </a>
+
+        <a href="/calendar" class="card-link">
+            <section class="card">
+                <h2>📆 Calendar</h2>
+                <p>{% if lang == 'en' %}Monthly calendar{% elif lang == 'np' %}मासिक क्यालेन्डर{% else %}月間カレンダーを見る{% endif %}</p>
+            </section>
+        </a>
+
+        <a href="/dashboard" class="card-link">
+            <section class="card">
+                <h2>📊 Dashboard</h2>
+                <p>{% if lang == 'en' %}Check overall status{% elif lang == 'np' %}समग्र स्थिति{% else %}全体の状況を確認する{% endif %}</p>
+            </section>
+        </a>
+
+        <a href="/graph" class="card-link">
+            <section class="card">
+                <h2>📈 Graph</h2>
+                <p>{% if lang == 'en' %}View data as graphs{% elif lang == 'np' %}ग्राफमा डाटा{% else %}データをグラフで見る{% endif %}</p>
+            </section>
+        </a>
+
+        <a href="/ai" class="card-link">
+            <section class="card">
+                <h2>🤖 AI</h2>
+                <p>{% if lang == 'en' %}AI advice{% elif lang == 'np' %}AI सल्लाह{% else %}AIがアドバイスをくれる{% endif %}</p>
+            </section>
+        </a>
+
+        <a href="/resume" class="card-link">
+            <section class="card">
+                <h2>📄 {% if lang == 'en' %}Resume (Input){% elif lang == 'np' %}बायोडाटा{% else %}履歴書（入力して作成）{% endif %}</h2>
+                <p>{% if lang == 'en' %}Fill in and create PDF{% elif lang == 'np' %}भरेर PDF बनाउनुहोस्{% else %}フォームに入力してPDF保存{% endif %}</p>
+            </section>
+        </a>
+
+        <a href="/resume/blank" class="card-link">
+            <section class="card">
+                <h2>📋 {% if lang == 'en' %}Blank Resume{% elif lang == 'np' %}खाली बायोडाटा{% else %}空白の履歴書{% endif %}</h2>
+                <p>{% if lang == 'en' %}Download blank resume PDF{% elif lang == 'np' %}खाली PDF डाउनलोड{% else %}何も書かずにPDFで保存（手書き用）{% endif %}</p>
+            </section>
+        </a>
+
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 StuPlan</p>
+    </footer>
+
+</body>
+</html>
