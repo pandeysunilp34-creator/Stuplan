@@ -6,12 +6,44 @@ import calendar
 from translations import TRANSLATIONS
 
 app = Flask(__name__)
+import os
+
+def init_db():
+    """PostgreSQLのテーブルを自動作成する"""
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        return
+    try:
+        import psycopg2
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS schedules (id SERIAL PRIMARY KEY, time TEXT NOT NULL, title TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS homeworks (id SERIAL PRIMARY KEY, subject TEXT NOT NULL, task TEXT NOT NULL, deadline TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, user_id INTEGER DEFAULT 1)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS parttime_jobs (id SERIAL PRIMARY KEY, date TEXT NOT NULL, start TEXT NOT NULL, "end" TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, type TEXT NOT NULL, message TEXT NOT NULL, time TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
+        conn.commit()
+        conn.close()
+        print("PostgreSQLテーブル作成完了")
+    except Exception as e:
+        print(f"テーブル作成エラー: {e}")
+
+init_db()
+
 app.secret_key = "stuplan_secret_key_2026"
 
 def get_db_connection():
-    conn = sqlite3.connect("stuplan.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+    import os
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        import psycopg2
+        import psycopg2.extras
+        conn = psycopg2.connect(database_url)
+        return conn
+    else:
+        conn = sqlite3.connect("stuplan.db")
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def get_user_id():
     return session.get("user_id", 1)
