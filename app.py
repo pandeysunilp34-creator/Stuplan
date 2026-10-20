@@ -1,21 +1,64 @@
 from flask import Flask, render_template, request, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+import os
 from datetime import date
 import calendar
 from translations import TRANSLATIONS
 
 app = Flask(__name__)
-import os
+app.secret_key = "stuplan_secret_key_2026"
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+def get_db_connection():
+    if DATABASE_URL:
+        import psycopg2
+        import psycopg2.extras
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = False
+        return conn
+    else:
+        conn = sqlite3.connect("stuplan.db")
+        conn.row_factory = sqlite3.Row
+        return conn
+
+def ph(n=1):
+    """プレースホルダーを返す。PostgreSQLは%s、SQLiteは?"""
+    if DATABASE_URL:
+        return ",".join(["%s"] * n) if n > 1 else "%s"
+    else:
+        return ",".join(["?"] * n) if n > 1 else "?"
+
+def row_to_dict(row):
+    if DATABASE_URL:
+        return dict(row)
+    else:
+        return dict(row)
+
+def fetchall_as_dict(cursor):
+    if DATABASE_URL:
+        cols = [desc[0] for desc in cursor.description]
+        return [dict(zip(cols, row)) for row in cursor.fetchall()]
+    else:
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def fetchone_as_dict(cursor):
+    if DATABASE_URL:
+        cols = [desc[0] for desc in cursor.description]
+        row = cursor.fetchone()
+        return dict(zip(cols, row)) if row else None
+    else:
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
 def init_db():
-    """PostgreSQLのテーブルを自動作成する"""
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
+    if not DATABASE_URL:
         return
     try:
         import psycopg2
-        conn = psycopg2.connect(database_url)
+        conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor()
         cursor.execute("""CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS schedules (id SERIAL PRIMARY KEY, time TEXT NOT NULL, title TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
@@ -30,21 +73,6 @@ def init_db():
 
 init_db()
 
-app.secret_key = "stuplan_secret_key_2026"
-
-def get_db_connection():
-    import os
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        import psycopg2
-        import psycopg2.extras
-        conn = psycopg2.connect(database_url)
-        return conn
-    else:
-        conn = sqlite3.connect("stuplan.db")
-        conn.row_factory = sqlite3.Row
-        return conn
-
 def get_user_id():
     return session.get("user_id", 1)
 
@@ -52,35 +80,35 @@ def get_schedules(keyword=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     uid = get_user_id()
+    p = ph()
     if keyword:
-        cursor.execute(
-            "SELECT * FROM schedules WHERE user_id = ? AND (title LIKE ? OR place LIKE ?) ORDER BY time",
-            (uid, f"%{keyword}%", f"%{keyword}%")
-        )
+        kw = f"%{keyword}%"
+        cursor.execute(f"SELECT * FROM schedules WHERE user_id = {p} AND (title LIKE {p} OR place LIKE {p}) ORDER BY time", (uid, kw, kw))
     else:
-        cursor.execute("SELECT * FROM schedules WHERE user_id = ? ORDER BY time", (uid,))
-    rows = cursor.fetchall()
+        cursor.execute(f"SELECT * FROM schedules WHERE user_id = {p} ORDER BY time", (uid,))
+    rows = fetchall_as_dict(cursor)
     conn.close()
-    return [dict(row) for row in rows]
+    return rows
 
 def get_schedule_by_id(schedule_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM schedules WHERE id = ? AND user_id = ?", (schedule_id, get_user_id()))
-    row = cursor.fetchone()
+    p = ph()
+    cursor.execute(f"SELECT * FROM schedules WHERE id = {p} AND user_id = {p}", (schedule_id, get_user_id()))
+    row = fetchone_as_dict(cursor)
     conn.close()
-    return dict(row) if row else None
+    return row
 
 def get_homeworks():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM homeworks WHERE user_id = ? ORDER BY deadline", (get_user_id(),))
-    rows = cursor.fetchall()
+    p = ph()
+    cursor.execute(f"SELECT * FROM homeworks WHERE user_id = {p} ORDER BY deadline", (get_user_id(),))
+    rows = fetchall_as_dict(cursor)
     conn.close()
     today = date.today().isoformat()
     result = []
-    for row in rows:
-        item = dict(row)
+    for item in rows:
         item["overdue"] = (item["deadline"] < today) and not item["done"]
         result.append(item)
     return result
@@ -88,34 +116,38 @@ def get_homeworks():
 def get_homework_by_id(homework_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM homeworks WHERE id = ? AND user_id = ?", (homework_id, get_user_id()))
-    row = cursor.fetchone()
+    p = ph()
+    cursor.execute(f"SELECT * FROM homeworks WHERE id = {p} AND user_id = {p}", (homework_id, get_user_id()))
+    row = fetchone_as_dict(cursor)
     conn.close()
-    return dict(row) if row else None
+    return row
 
 def get_parttime_jobs():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM parttime_jobs WHERE user_id = ? ORDER BY date", (get_user_id(),))
-    rows = cursor.fetchall()
+    p = ph()
+    cursor.execute(f'SELECT * FROM parttime_jobs WHERE user_id = {p} ORDER BY date', (get_user_id(),))
+    rows = fetchall_as_dict(cursor)
     conn.close()
-    return [dict(row) for row in rows]
+    return rows
 
 def get_parttime_job_by_id(job_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM parttime_jobs WHERE id = ? AND user_id = ?", (job_id, get_user_id()))
-    row = cursor.fetchone()
+    p = ph()
+    cursor.execute(f'SELECT * FROM parttime_jobs WHERE id = {p} AND user_id = {p}', (job_id, get_user_id()))
+    row = fetchone_as_dict(cursor)
     conn.close()
-    return dict(row) if row else None
+    return row
 
 def get_notifications():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC", (get_user_id(),))
-    rows = cursor.fetchall()
+    p = ph()
+    cursor.execute(f"SELECT * FROM notifications WHERE user_id = {p} ORDER BY id DESC", (get_user_id(),))
+    rows = fetchall_as_dict(cursor)
     conn.close()
-    return [dict(row) for row in rows]
+    return rows
 
 # --- 言語選択 ---
 @app.route("/")
@@ -143,8 +175,9 @@ def login():
         password = request.form["password"]
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
+        p = ph()
+        cursor.execute(f"SELECT * FROM users WHERE username = {p}", (username,))
+        user = fetchone_as_dict(cursor)
         conn.close()
         if user and check_password_hash(user["password"], password):
             session["user_id"] = user["id"]
@@ -172,12 +205,14 @@ def register():
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, generate_password_hash(password)))
+            p = ph()
+            cursor.execute(f"INSERT INTO users (username, password) VALUES ({ph(2)})", (username, generate_password_hash(password)))
             conn.commit()
             conn.close()
             success = {"ja": "登録が完了しました。ログインしてください。", "en": "Registration complete. Please login.", "np": "दर्ता सफल भयो। कृपया लगइन गर्नुहोस्।"}.get(lang)
             return render_template("register.html", success=success, lang=lang)
-        except:
+        except Exception as e:
+            print(f"Register error: {e}")
             error = {"ja": "そのユーザー名はすでに使われています", "en": "That username is already taken", "np": "त्यो प्रयोगकर्ता नाम पहिले नै प्रयोग भइसकेको छ"}.get(lang)
             return render_template("register.html", error=error, lang=lang)
     return render_template("register.html", lang=lang)
@@ -194,15 +229,16 @@ def home():
     if "user_id" not in session:
         return redirect("/login")
     uid = get_user_id()
+    p = ph()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM schedules WHERE user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM schedules WHERE user_id = {p}", (uid,))
     schedule_count = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = {p}", (uid,))
     homework_count = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM parttime_jobs WHERE user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM parttime_jobs WHERE user_id = {p}", (uid,))
     parttime_count = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM notifications WHERE user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM notifications WHERE user_id = {p}", (uid,))
     notification_count = cursor.fetchone()[0]
     conn.close()
     return render_template("home.html", schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, notification_count=notification_count, lang=session.get("lang", "ja"))
@@ -223,8 +259,7 @@ def add_schedule():
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO schedules (time, title, place, user_id) VALUES (?, ?, ?, ?)",
-            (request.form["time"], request.form["title"], request.form["place"], get_user_id()))
+        cursor.execute(f"INSERT INTO schedules (time, title, place, user_id) VALUES ({ph(4)})", (request.form["time"], request.form["title"], request.form["place"], get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/schedule")
@@ -237,8 +272,8 @@ def edit_schedule(schedule_id):
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE schedules SET time = ?, title = ?, place = ? WHERE id = ? AND user_id = ?",
-            (request.form["time"], request.form["title"], request.form["place"], schedule_id, get_user_id()))
+        p = ph()
+        cursor.execute(f"UPDATE schedules SET time = {p}, title = {p}, place = {p} WHERE id = {p} AND user_id = {p}", (request.form["time"], request.form["title"], request.form["place"], schedule_id, get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/schedule")
@@ -248,7 +283,8 @@ def edit_schedule(schedule_id):
 def delete_schedule(schedule_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM schedules WHERE id = ? AND user_id = ?", (schedule_id, get_user_id()))
+    p = ph()
+    cursor.execute(f"DELETE FROM schedules WHERE id = {p} AND user_id = {p}", (schedule_id, get_user_id()))
     conn.commit()
     conn.close()
     return redirect("/schedule")
@@ -267,8 +303,7 @@ def add_homework():
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO homeworks (subject, task, deadline, done, user_id) VALUES (?, ?, ?, 0, ?)",
-            (request.form["subject"], request.form["task"], request.form["deadline"], get_user_id()))
+        cursor.execute(f"INSERT INTO homeworks (subject, task, deadline, done, user_id) VALUES ({ph(5)})", (request.form["subject"], request.form["task"], request.form["deadline"], 0, get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/homework")
@@ -282,8 +317,8 @@ def edit_homework(homework_id):
         done = 1 if request.form.get("done") == "on" else 0
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE homeworks SET subject = ?, task = ?, deadline = ?, done = ? WHERE id = ? AND user_id = ?",
-            (request.form["subject"], request.form["task"], request.form["deadline"], done, homework_id, get_user_id()))
+        p = ph()
+        cursor.execute(f"UPDATE homeworks SET subject = {p}, task = {p}, deadline = {p}, done = {p} WHERE id = {p} AND user_id = {p}", (request.form["subject"], request.form["task"], request.form["deadline"], done, homework_id, get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/homework")
@@ -293,7 +328,8 @@ def edit_homework(homework_id):
 def delete_homework(homework_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM homeworks WHERE id = ? AND user_id = ?", (homework_id, get_user_id()))
+    p = ph()
+    cursor.execute(f"DELETE FROM homeworks WHERE id = {p} AND user_id = {p}", (homework_id, get_user_id()))
     conn.commit()
     conn.close()
     return redirect("/homework")
@@ -312,8 +348,7 @@ def add_parttime():
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO parttime_jobs (date, start, end, place, user_id) VALUES (?, ?, ?, ?, ?)",
-            (request.form["date"], request.form["start"], request.form["end"], request.form["place"], get_user_id()))
+        cursor.execute(f'INSERT INTO parttime_jobs (date, start, "end", place, user_id) VALUES ({ph(5)})', (request.form["date"], request.form["start"], request.form["end"], request.form["place"], get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/parttime")
@@ -326,8 +361,8 @@ def edit_parttime(job_id):
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE parttime_jobs SET date = ?, start = ?, end = ?, place = ? WHERE id = ? AND user_id = ?",
-            (request.form["date"], request.form["start"], request.form["end"], request.form["place"], job_id, get_user_id()))
+        p = ph()
+        cursor.execute(f'UPDATE parttime_jobs SET date = {p}, start = {p}, "end" = {p}, place = {p} WHERE id = {p} AND user_id = {p}', (request.form["date"], request.form["start"], request.form["end"], request.form["place"], job_id, get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/parttime")
@@ -337,7 +372,8 @@ def edit_parttime(job_id):
 def delete_parttime(job_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM parttime_jobs WHERE id = ? AND user_id = ?", (job_id, get_user_id()))
+    p = ph()
+    cursor.execute(f'DELETE FROM parttime_jobs WHERE id = {p} AND user_id = {p}', (job_id, get_user_id()))
     conn.commit()
     conn.close()
     return redirect("/parttime")
@@ -356,8 +392,7 @@ def add_notification():
     if request.method == "POST":
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO notifications (type, message, time, user_id) VALUES (?, ?, ?, ?)",
-            (request.form["type"], request.form["message"], request.form["time"], get_user_id()))
+        cursor.execute(f"INSERT INTO notifications (type, message, time, user_id) VALUES ({ph(4)})", (request.form["type"], request.form["message"], request.form["time"], get_user_id()))
         conn.commit()
         conn.close()
         return redirect("/notification")
@@ -367,7 +402,8 @@ def add_notification():
 def delete_notification(notification_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM notifications WHERE id = ? AND user_id = ?", (notification_id, get_user_id()))
+    p = ph()
+    cursor.execute(f"DELETE FROM notifications WHERE id = {p} AND user_id = {p}", (notification_id, get_user_id()))
     conn.commit()
     conn.close()
     return redirect("/notification")
@@ -388,13 +424,14 @@ def calendar_view():
         next_year, next_month = year, month + 1
     cal = calendar.monthcalendar(year, month)
     uid = get_user_id()
+    p = ph()
     conn = get_db_connection()
     cursor = conn.cursor()
     month_str = f"{year}-{month:02d}"
-    cursor.execute("SELECT deadline, task, subject FROM homeworks WHERE deadline LIKE ? AND user_id = ?", (f"{month_str}%", uid))
-    homework_rows = cursor.fetchall()
-    cursor.execute("SELECT * FROM parttime_jobs WHERE user_id = ?", (uid,))
-    parttime_rows = cursor.fetchall()
+    cursor.execute(f"SELECT deadline, task, subject FROM homeworks WHERE deadline LIKE {ph()} AND user_id = {p}", (f"{month_str}%", uid))
+    homework_rows = fetchall_as_dict(cursor)
+    cursor.execute(f"SELECT * FROM parttime_jobs WHERE user_id = {p}", (uid,))
+    parttime_rows = fetchall_as_dict(cursor)
     conn.close()
     events = {}
     for row in homework_rows:
@@ -417,8 +454,7 @@ def calendar_view():
             pass
     lang = session.get("lang", "ja")
     t = TRANSLATIONS[lang]
-    return render_template("calendar.html", year=year, month=month, cal=cal, events=events, today=today,
-        prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month, t=t)
+    return render_template("calendar.html", year=year, month=month, cal=cal, events=events, today=today, prev_year=prev_year, prev_month=prev_month, next_year=next_year, next_month=next_month, t=t)
 
 # --- Dashboard ---
 @app.route("/dashboard")
@@ -427,23 +463,24 @@ def dashboard():
     today_str = today.isoformat()
     today_display = f"{today.year}年{today.month}月{today.day}日"
     uid = get_user_id()
+    p = ph()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = {p}", (uid,))
     homework_undone = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < ? AND user_id = ?", (today_str, uid))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < {p} AND user_id = {p}", (today_str, uid))
     homework_overdue = cursor.fetchone()[0]
-    cursor.execute("SELECT * FROM schedules WHERE user_id = ? ORDER BY time", (uid,))
-    schedules = [dict(row) for row in cursor.fetchall()]
-    cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 3", (uid,))
-    recent_notifications = [dict(row) for row in cursor.fetchall()]
+    cursor.execute(f"SELECT * FROM schedules WHERE user_id = {p} ORDER BY time", (uid,))
+    schedules = fetchall_as_dict(cursor)
+    cursor.execute(f"SELECT * FROM notifications WHERE user_id = {p} ORDER BY id DESC LIMIT 3", (uid,))
+    recent_notifications = fetchall_as_dict(cursor)
     parttime_count = 0
     total_hours = 0
-    cursor.execute("SELECT start, end FROM parttime_jobs WHERE user_id = ?", (uid,))
+    cursor.execute(f'SELECT start, "end" FROM parttime_jobs WHERE user_id = {p}', (uid,))
     for row in cursor.fetchall():
         try:
-            start_h, start_m = map(int, row["start"].split(":"))
-            end_h, end_m = map(int, row["end"].split(":"))
+            start_h, start_m = map(int, row[0].split(":"))
+            end_h, end_m = map(int, row[1].split(":"))
             hours = (end_h * 60 + end_m - start_h * 60 - start_m) / 60
             total_hours += hours
             parttime_count += 1
@@ -452,24 +489,23 @@ def dashboard():
     conn.close()
     lang = session.get("lang", "ja")
     t = TRANSLATIONS[lang]
-    return render_template("dashboard.html", today_display=today_display, homework_undone=homework_undone,
-        homework_overdue=homework_overdue, schedules=schedules, recent_notifications=recent_notifications,
-        parttime_count=parttime_count, total_hours=round(total_hours, 1), t=t)
+    return render_template("dashboard.html", today_display=today_display, homework_undone=homework_undone, homework_overdue=homework_overdue, schedules=schedules, recent_notifications=recent_notifications, parttime_count=parttime_count, total_hours=round(total_hours, 1), t=t)
 
 # --- Graph ---
 @app.route("/graph")
 def graph():
     today = date.today().isoformat()
     uid = get_user_id()
+    p = ph()
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 1 AND user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 1 AND user_id = {p}", (uid,))
     homework_done = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline >= ? AND user_id = ?", (today, uid))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline >= {p} AND user_id = {p}", (today, uid))
     homework_undone = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < ? AND user_id = ?", (today, uid))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < {p} AND user_id = {p}", (today, uid))
     homework_overdue = cursor.fetchone()[0]
-    cursor.execute("SELECT date, start, end, place FROM parttime_jobs WHERE user_id = ? ORDER BY date", (uid,))
+    cursor.execute(f'SELECT date, start, "end", place FROM parttime_jobs WHERE user_id = {p} ORDER BY date', (uid,))
     parttime_rows = cursor.fetchall()
     conn.close()
     parttime_labels = []
@@ -477,19 +513,17 @@ def graph():
     total_hours = 0
     for row in parttime_rows:
         try:
-            start_h, start_m = map(int, row["start"].split(":"))
-            end_h, end_m = map(int, row["end"].split(":"))
+            start_h, start_m = map(int, row[1].split(":"))
+            end_h, end_m = map(int, row[2].split(":"))
             hours = round((end_h * 60 + end_m - start_h * 60 - start_m) / 60, 1)
-            parttime_labels.append(f"{row['date']} {row['place']}")
+            parttime_labels.append(f"{row[0]} {row[3]}")
             parttime_hours.append(hours)
             total_hours += hours
         except:
             pass
     lang = session.get("lang", "ja")
     t = TRANSLATIONS[lang]
-    return render_template("graph.html", homework_done=homework_done, homework_undone=homework_undone,
-        homework_overdue=homework_overdue, parttime_labels=parttime_labels, parttime_hours=parttime_hours,
-        total_hours=round(total_hours, 1), t=t)
+    return render_template("graph.html", homework_done=homework_done, homework_undone=homework_undone, homework_overdue=homework_overdue, parttime_labels=parttime_labels, parttime_hours=parttime_hours, total_hours=round(total_hours, 1), t=t)
 
 # --- AI提案 ---
 @app.route("/ai")
@@ -498,17 +532,17 @@ def ai():
     today = date.today()
     today_str = today.isoformat()
     uid = get_user_id()
+    p = ph()
     suggestions = []
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < ? AND user_id = ?", (today_str, uid))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < {p} AND user_id = {p}", (today_str, uid))
     overdue_count = cursor.fetchone()[0]
     if overdue_count > 0:
         suggestions.append({"level": "danger", "icon": "⚠️", "message": f"期限切れの宿題が{overdue_count}件あります。早急に対応しましょう。"})
     three_days_later = (today + timedelta(days=3)).isoformat()
-    cursor.execute("SELECT subject, task, deadline FROM homeworks WHERE done = 0 AND deadline >= ? AND deadline <= ? AND user_id = ?",
-        (today_str, three_days_later, uid))
-    for hw in cursor.fetchall():
+    cursor.execute(f"SELECT subject, task, deadline FROM homeworks WHERE done = 0 AND deadline >= {p} AND deadline <= {p} AND user_id = {p}", (today_str, three_days_later, uid))
+    for hw in fetchall_as_dict(cursor):
         deadline_date = date.fromisoformat(hw["deadline"])
         days_left = (deadline_date - today).days
         if days_left == 0:
@@ -518,16 +552,16 @@ def ai():
         else:
             msg = f"「{hw['subject']} / {hw['task']}」の締め切りまであと{days_left}日です。"
         suggestions.append({"level": "warning", "icon": "📝", "message": msg})
-    cursor.execute("SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = ?", (uid,))
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND user_id = {p}", (uid,))
     undone_count = cursor.fetchone()[0]
     if undone_count >= 3:
         suggestions.append({"level": "warning", "icon": "📚", "message": f"未完了の宿題が{undone_count}件あります。優先順位をつけて取り組みましょう。"})
     total_hours = 0
-    cursor.execute("SELECT start, end FROM parttime_jobs WHERE user_id = ?", (uid,))
+    cursor.execute(f'SELECT start, "end" FROM parttime_jobs WHERE user_id = {p}', (uid,))
     for row in cursor.fetchall():
         try:
-            start_h, start_m = map(int, row["start"].split(":"))
-            end_h, end_m = map(int, row["end"].split(":"))
+            start_h, start_m = map(int, row[0].split(":"))
+            end_h, end_m = map(int, row[1].split(":"))
             total_hours += (end_h * 60 + end_m - start_h * 60 - start_m) / 60
         except:
             pass
