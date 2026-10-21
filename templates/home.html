@@ -13,7 +13,7 @@
         <p>Student + Plan</p>
         {% if session.username %}
         <div class="user-info">
-            <span>👤 {{ session.username }}</span>
+            <a href="/profile" style="color:white; text-decoration:none;">👤 {{ session.username }}</a>
             <a href="/logout">
                 {% if lang == 'en' %}Logout
                 {% elif lang == 'np' %}लगआउट

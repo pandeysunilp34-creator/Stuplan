@@ -590,5 +590,72 @@ def resume():
 def resume_blank():
     return render_template("resume_preview.html", data={})
 
+
+# --- プロフィール ---
+@app.route("/profile")
+def profile():
+    if "user_id" not in session:
+        return redirect("/login")
+    uid = get_user_id()
+    p = ph()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM users WHERE id = {p}", (uid,))
+    user = fetchone_as_dict(cursor)
+    cursor.execute(f"SELECT COUNT(*) FROM schedules WHERE user_id = {p}", (uid,))
+    schedule_count = cursor.fetchone()[0]
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE user_id = {p}", (uid,))
+    homework_count = cursor.fetchone()[0]
+    cursor.execute(f"SELECT COUNT(*) FROM parttime_jobs WHERE user_id = {p}", (uid,))
+    parttime_count = cursor.fetchone()[0]
+    conn.close()
+    lang = session.get("lang", "ja")
+    return render_template("profile.html", user=user, schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, lang=lang, pw_error=None, pw_success=None)
+
+@app.route("/profile/change_password", methods=["POST"])
+def change_password():
+    if "user_id" not in session:
+        return redirect("/login")
+    uid = get_user_id()
+    lang = session.get("lang", "ja")
+    current_password = request.form["current_password"]
+    new_password = request.form["new_password"]
+    new_password_confirm = request.form["new_password_confirm"]
+    p = ph()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM users WHERE id = {p}", (uid,))
+    user = fetchone_as_dict(cursor)
+    cursor.execute(f"SELECT COUNT(*) FROM schedules WHERE user_id = {p}", (uid,))
+    schedule_count = cursor.fetchone()[0]
+    cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE user_id = {p}", (uid,))
+    homework_count = cursor.fetchone()[0]
+    cursor.execute(f"SELECT COUNT(*) FROM parttime_jobs WHERE user_id = {p}", (uid,))
+    parttime_count = cursor.fetchone()[0]
+    if not check_password_hash(user["password"], current_password):
+        conn.close()
+        pw_error = {"ja": "現在のパスワードが違います", "en": "Current password is incorrect", "np": "हालको पासवर्ड गलत छ"}.get(lang)
+        return render_template("profile.html", user=user, schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, lang=lang, pw_error=pw_error, pw_success=None)
+    if len(new_password) < 6:
+        conn.close()
+        pw_error = {"ja": "新しいパスワードは6文字以上にしてください", "en": "New password must be at least 6 characters", "np": "नयाँ पासवर्ड कम्तीमा ६ अक्षर हुनुपर्छ"}.get(lang)
+        return render_template("profile.html", user=user, schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, lang=lang, pw_error=pw_error, pw_success=None)
+    if new_password != new_password_confirm:
+        conn.close()
+        pw_error = {"ja": "新しいパスワードが一致しません", "en": "New passwords do not match", "np": "नयाँ पासवर्ड मेल खाएन"}.get(lang)
+        return render_template("profile.html", user=user, schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, lang=lang, pw_error=pw_error, pw_success=None)
+    cursor.execute(f"UPDATE users SET password = {p} WHERE id = {p}", (generate_password_hash(new_password), uid))
+    conn.commit()
+    conn.close()
+    pw_success = {"ja": "パスワードを変更しました", "en": "Password changed successfully", "np": "पासवर्ड परिवर्तन भयो"}.get(lang)
+    user["password"] = generate_password_hash(new_password)
+    return render_template("profile.html", user=user, schedule_count=schedule_count, homework_count=homework_count, parttime_count=parttime_count, lang=lang, pw_error=None, pw_success=pw_success)
+
+@app.route("/set_language_stay/<lang>")
+def set_language_stay(lang):
+    if lang in ["ja", "en", "np"]:
+        session["lang"] = lang
+    return redirect("/profile")
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
