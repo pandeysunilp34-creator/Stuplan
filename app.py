@@ -230,6 +230,45 @@ def home():
     if "user_id" not in session:
         return redirect("/login")
     uid = get_user_id()
+
+    # 締め切りが近い宿題を自動でNotificationに追加
+    try:
+        from datetime import timedelta
+        today = date.today()
+        three_days_later = (today + timedelta(days=3)).isoformat()
+        today_str = today.isoformat()
+        p = ph()
+        conn_n = get_db_connection()
+        cursor_n = conn_n.cursor()
+        cursor_n.execute(
+            f"SELECT subject, task, deadline FROM homeworks WHERE done = 0 AND deadline >= {p} AND deadline <= {p} AND user_id = {p}",
+            (today_str, three_days_later, uid)
+        )
+        upcoming = fetchall_as_dict(cursor_n)
+        for hw in upcoming:
+            deadline_date = date.fromisoformat(hw["deadline"])
+            days_left = (deadline_date - today).days
+            if days_left == 0:
+                msg = f"【締め切り今日】{hw['subject']} / {hw['task']}"
+            elif days_left == 1:
+                msg = f"【締め切り明日】{hw['subject']} / {hw['task']}"
+            else:
+                msg = f"【締め切りまで{days_left}日】{hw['subject']} / {hw['task']}"
+            # 同じメッセージが既にないか確認
+            cursor_n.execute(
+                f"SELECT COUNT(*) FROM notifications WHERE message = {p} AND user_id = {p}",
+                (msg, uid)
+            )
+            count = cursor_n.fetchone()[0]
+            if count == 0:
+                cursor_n.execute(
+                    f"INSERT INTO notifications (type, message, time, user_id) VALUES ({ph(4)})",
+                    ("📝宿題", msg, today_str, uid)
+                )
+        conn_n.commit()
+        conn_n.close()
+    except Exception as e:
+        print(f"自動通知エラー: {e}")
     p = ph()
     conn = get_db_connection()
     cursor = conn.cursor()
