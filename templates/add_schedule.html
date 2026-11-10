@@ -14,7 +14,9 @@
             <h2>📅 {{ t.schedule_add_title }}</h2>
             <form method="POST" class="add-form">
                 <label>{{ t.time }}</label>
-                <input type="text" name="time" placeholder="{{ t.time_placeholder }}" required>
+                <input type="date" name="date" id="sch_date" required>
+                <label>{{ t.time }}</label>
+                <input type="time" name="time" id="sch_time" required>
                 <label>{{ t.title_label }}</label>
                 <input type="text" name="title" placeholder="{{ t.title_placeholder }}" required>
                 <label>{{ t.place }}</label>
@@ -24,5 +26,15 @@
         </section>
     </main>
     <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+    <script>
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth()+1).padStart(2,'0');
+        const dd = String(now.getDate()).padStart(2,'0');
+        const hh = String(now.getHours()).padStart(2,'0');
+        const min = String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('sch_date').value = yyyy+'-'+mm+'-'+dd;
+        document.getElementById('sch_time').value = hh+':'+min;
+    </script>
 </body>
 </html>

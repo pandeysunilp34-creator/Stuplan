@@ -14,11 +14,11 @@
             <h2>💼 {{ t.parttime_add_title }}</h2>
             <form method="POST" class="add-form">
                 <label>{{ t.date }}</label>
-                <input type="text" name="date" placeholder="{{ t.date_placeholder }}" required>
+                <input type="date" name="date" id="pt_date" required>
                 <label>{{ t.start }}</label>
-                <input type="text" name="start" placeholder="{{ t.start_placeholder }}" required>
+                <input type="time" name="start" required>
                 <label>{{ t.end }}</label>
-                <input type="text" name="end" placeholder="{{ t.end_placeholder }}" required>
+                <input type="time" name="end" required>
                 <label>{{ t.place }}</label>
                 <input type="text" name="place" placeholder="{{ t.place_placeholder }}" required>
                 <button type="submit">{{ t.add }}</button>
@@ -26,5 +26,12 @@
         </section>
     </main>
     <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
+    <script>
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth()+1).padStart(2,'0');
+        const dd = String(today.getDate()).padStart(2,'0');
+        document.getElementById('pt_date').value = yyyy+'-'+mm+'-'+dd;
+    </script>
 </body>
 </html>
