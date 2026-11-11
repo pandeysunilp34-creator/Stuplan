@@ -1,11 +1,15 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
+import json
 from datetime import date
 import calendar
 from translations import TRANSLATIONS
 
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BM9aWYi531OzMEIxdcb_AO4rXbPm-jl8jOiB9mLTaRNsmt2Dg-xMnPRCz8dV5OMG4OWE5-A0DmKCVJ-ebLkKDr8")
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQghwa-QIN7hzG-P-HRG8Op7B4aESMiY2BxFmjc2os_fkahRANCAATPWlmIud9TszBCMXXG_wDuK12z5vo5fIzogfZi02kTbJrdg4PsTJz0Qs_HVeTjBuDlhOfgNA5iglSfnmy5Cg6_")
+VAPID_CLAIMS = {"sub": "mailto:stuplan@example.com"}
 app = Flask(__name__)
 app.secret_key = "stuplan_secret_key_2026"
 
@@ -65,6 +69,7 @@ def init_db():
         cursor.execute("""CREATE TABLE IF NOT EXISTS schedules (id SERIAL PRIMARY KEY, time TEXT NOT NULL, title TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS homeworks (id SERIAL PRIMARY KEY, subject TEXT NOT NULL, task TEXT NOT NULL, deadline TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, user_id INTEGER DEFAULT 1)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS parttime_jobs (id SERIAL PRIMARY KEY, date TEXT NOT NULL, start TEXT NOT NULL, "end" TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS push_subscriptions (id SERIAL PRIMARY KEY, user_id INTEGER, subscription TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, type TEXT NOT NULL, message TEXT NOT NULL, time TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
         conn.commit()
         conn.close()
@@ -364,6 +369,21 @@ def edit_homework(homework_id):
         return redirect("/homework")
     return render_template("edit_homework.html", item=get_homework_by_id(homework_id), t=t)
 
+
+@app.route("/homework/toggle/<int:homework_id>")
+def toggle_homework(homework_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT done FROM homeworks WHERE id = {p} AND user_id = {p}", (homework_id, get_user_id()))
+    row = cursor.fetchone()
+    if row:
+        new_done = 0 if row[0] else 1
+        cursor.execute(f"UPDATE homeworks SET done = {p} WHERE id = {p} AND user_id = {p}", (new_done, homework_id, get_user_id()))
+        conn.commit()
+    conn.close()
+    return redirect("/homework")
+
 @app.route("/homework/delete/<int:homework_id>")
 def delete_homework(homework_id):
     conn = get_db_connection()
@@ -510,8 +530,12 @@ def dashboard():
     homework_undone = cursor.fetchone()[0]
     cursor.execute(f"SELECT COUNT(*) FROM homeworks WHERE done = 0 AND deadline < {p} AND user_id = {p}", (today_str, uid))
     homework_overdue = cursor.fetchone()[0]
-    cursor.execute(f"SELECT * FROM schedules WHERE user_id = {p} ORDER BY time", (uid,))
+    cursor.execute(f"SELECT * FROM schedules WHERE user_id = {p} AND time LIKE {ph()} ORDER BY time", (uid, f"{today_str}%"))
     schedules = fetchall_as_dict(cursor)
+    from datetime import timedelta
+    week_later = (today + timedelta(days=7)).isoformat()
+    cursor.execute(f"SELECT * FROM homeworks WHERE done = 0 AND deadline >= {p} AND deadline <= {p} AND user_id = {p} ORDER BY deadline LIMIT 5", (today_str, week_later, uid))
+    upcoming_homeworks = fetchall_as_dict(cursor)
     cursor.execute(f"SELECT * FROM notifications WHERE user_id = {p} ORDER BY id DESC LIMIT 3", (uid,))
     recent_notifications = fetchall_as_dict(cursor)
     parttime_count = 0
@@ -529,7 +553,26 @@ def dashboard():
     conn.close()
     lang = session.get("lang", "ja")
     t = TRANSLATIONS[lang]
-    return render_template("dashboard.html", today_display=today_display, homework_undone=homework_undone, homework_overdue=homework_overdue, schedules=schedules, recent_notifications=recent_notifications, parttime_count=parttime_count, total_hours=round(total_hours, 1), t=t)
+    return render_template("dashboard.html", today_display=today_display, homework_undone=homework_undone, homework_overdue=homework_overdue, schedules=schedules, upcoming_homeworks=upcoming_homeworks, recent_notifications=recent_notifications, parttime_count=parttime_count, total_hours=round(total_hours, 1), t=t)
+
+
+@app.route("/push/vapid-key")
+def vapid_key():
+    return jsonify({"publicKey": VAPID_PUBLIC_KEY})
+
+@app.route("/push/subscribe", methods=["POST"])
+def push_subscribe():
+    if "user_id" not in session:
+        return jsonify({"error": "not logged in"}), 401
+    sub = request.get_json()
+    uid = get_user_id()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"INSERT INTO push_subscriptions (user_id, subscription) VALUES ({p}, {p})", (uid, json.dumps(sub)))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 # --- Graph ---
 @app.route("/graph")
