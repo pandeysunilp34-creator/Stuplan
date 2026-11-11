@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - バイト先一覧</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .jobs-header{background:linear-gradient(135deg,#2e8b57,#1a5c38);color:white;padding:20px 16px;text-align:center}
+        .jobs-header h1{font-size:1.5rem;margin-bottom:4px}
+        .jobs-header p{font-size:.85rem;opacity:.8}
+        .container{max-width:650px;margin:0 auto;padding:16px 16px 90px}
+        .add-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:#2e8b57;color:white;padding:14px;border-radius:14px;text-decoration:none;font-size:1rem;font-weight:bold;margin-bottom:16px}
+        .job-card{background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+        .job-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+        .job-name{font-size:1.1rem;font-weight:bold;color:#1a1a1a}
+        .job-actions{display:flex;gap:8px}
+        .job-actions a{font-size:.8rem;color:#888;text-decoration:none;padding:4px 10px;border:1px solid #ddd;border-radius:8px}
+        .job-actions a.edit{color:#2e8b57;border-color:#2e8b57}
+        .job-actions a.del{color:#e74c3c;border-color:#e74c3c}
+        .wage-row{display:flex;gap:16px;font-size:.85rem;color:#555;margin-bottom:12px}
+        .job-links{display:flex;gap:8px}
+        .job-links a{flex:1;text-align:center;padding:8px;border-radius:10px;text-decoration:none;font-size:.85rem;font-weight:bold}
+        .job-links a.shifts{background:#f0faf5;color:#2e8b57}
+        .job-links a.salary{background:#e8f4fd;color:#1a73e8}
+        .back-link{color:#888;font-size:.85rem;text-decoration:none;display:inline-block;margin-bottom:12px}
+        .empty-state{text-align:center;padding:50px 20px;color:#888}
+        .empty-state .icon{font-size:3rem;margin-bottom:12px}
+    </style>
+</head>
+<body style="background:#f4f7f4;min-height:100vh;">
+<div class="jobs-header">
+    <h1>🏪 バイト先一覧</h1>
+    <p>複数のバイト先を管理</p>
+</div>
+<div class="container">
+    <a href="/home" class="back-link">← ホームに戻る</a>
+    <a href="/jobs/add" class="add-btn">➕ バイト先を追加する</a>
+    {% if places %}
+    {% for place in places %}
+    <div class="job-card">
+        <div class="job-card-top">
+            <div class="job-name">{{ place.name }}</div>
+            <div class="job-actions">
+                <a href="/jobs/edit/{{ place.id }}" class="edit">✏️ 編集</a>
+                <a href="/jobs/delete/{{ place.id }}" class="del" onclick="return confirm('{{ place.name }}を削除しますか？')">🗑</a>
+            </div>
+        </div>
+        <div class="wage-row">
+            <span>⏰ 通常 ¥{{ "{:,}".format(place.hourly_wage) }}/h</span>
+            <span>🌙 深夜 ¥{{ "{:,}".format(place.late_night_wage) }}/h</span>
+        </div>
+        <div class="job-links">
+            <a href="/jobs/{{ place.id }}/shifts" class="shifts">📋 シフト・給料</a>
+            <a href="/salary" class="salary">💴 給料サマリー</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">🏪</div>
+        <p>バイト先が登録されていません</p>
+        <p style="font-size:.85rem;margin-top:8px;">上のボタンから追加してください</p>
+    </div>
+    {% endif %}
+</div>
+<nav class="bottom-nav">
+    <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+    <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+    <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
+    <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
+    <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+</nav>
+</body>
+</html>

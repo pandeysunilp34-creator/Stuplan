@@ -71,8 +71,8 @@ def init_db():
         cursor.execute("""CREATE TABLE IF NOT EXISTS parttime_jobs (id SERIAL PRIMARY KEY, date TEXT NOT NULL, start TEXT NOT NULL, "end" TEXT NOT NULL, place TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS push_subscriptions (id SERIAL PRIMARY KEY, user_id INTEGER, subscription TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
         cursor.execute("""CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, type TEXT NOT NULL, message TEXT NOT NULL, time TEXT NOT NULL, user_id INTEGER DEFAULT 1)""")
-        conn.commit()
-        conn.close()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS job_places (id SERIAL PRIMARY KEY, name TEXT NOT NULL, hourly_wage INTEGER NOT NULL DEFAULT 1000, late_night_wage INTEGER NOT NULL DEFAULT 1250, user_id INTEGER DEFAULT 1)""")
+        cursor.execute("""CREATE TABLE IF NOT EXISTS job_shifts (id SERIAL PRIMARY KEY, job_place_id INTEGER NOT NULL, date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, memo TEXT DEFAULT '', user_id INTEGER DEFAULT 1)""")
         print("PostgreSQLテーブル作成完了")
     except Exception as e:
         print(f"テーブル作成エラー: {e}")
@@ -742,3 +742,185 @@ def set_language_stay(lang):
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
+
+def calc_pay(start_str, end_str, hourly_wage, late_night_wage):
+    try:
+        sh, sm = map(int, start_str.split(":"))
+        eh, em = map(int, end_str.split(":"))
+        start_min = sh * 60 + sm
+        end_min = eh * 60 + em
+        if end_min <= start_min:
+            end_min += 24 * 60
+        total_pay = 0
+        for m in range(start_min, end_min):
+            hour = (m // 60) % 24
+            if hour >= 22 or hour < 5:
+                total_pay += late_night_wage / 60
+            else:
+                total_pay += hourly_wage / 60
+        total_hours = (end_min - start_min) / 60
+        return round(total_pay), round(total_hours, 2)
+    except:
+        return 0, 0
+
+@app.route("/jobs")
+def jobs():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT * FROM job_places WHERE user_id={p} ORDER BY id", (get_user_id(),))
+    places = fetchall_as_dict(cursor)
+    conn.close()
+    return render_template("jobs.html", places=places)
+
+@app.route("/jobs/add", methods=["GET", "POST"])
+def add_job_place():
+    if request.method == "POST":
+        name = request.form["name"]
+        hourly_wage = int(request.form["hourly_wage"])
+        late_night_wage = int(request.form["late_night_wage"])
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"INSERT INTO job_places (name, hourly_wage, late_night_wage, user_id) VALUES ({ph(4)})", (name, hourly_wage, late_night_wage, get_user_id()))
+        conn.commit()
+        conn.close()
+        return redirect("/jobs")
+    return render_template("add_job_place.html")
+
+@app.route("/jobs/edit/<int:place_id>", methods=["GET", "POST"])
+def edit_job_place(place_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT * FROM job_places WHERE id={p} AND user_id={p}", (place_id, get_user_id()))
+    place = fetchone_as_dict(cursor)
+    conn.close()
+    if not place:
+        return redirect("/jobs")
+    if request.method == "POST":
+        name = request.form["name"]
+        hourly_wage = int(request.form["hourly_wage"])
+        late_night_wage = int(request.form["late_night_wage"])
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        p = ph()
+        cursor.execute(f"UPDATE job_places SET name={p}, hourly_wage={p}, late_night_wage={p} WHERE id={p} AND user_id={p}", (name, hourly_wage, late_night_wage, place_id, get_user_id()))
+        conn.commit()
+        conn.close()
+        return redirect("/jobs")
+    return render_template("edit_job_place.html", place=place)
+
+@app.route("/jobs/delete/<int:place_id>")
+def delete_job_place(place_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"DELETE FROM job_shifts WHERE job_place_id={p} AND user_id={p}", (place_id, get_user_id()))
+    cursor.execute(f"DELETE FROM job_places WHERE id={p} AND user_id={p}", (place_id, get_user_id()))
+    conn.commit()
+    conn.close()
+    return redirect("/jobs")
+
+@app.route("/jobs/<int:place_id>/shifts")
+def job_shifts(place_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT * FROM job_places WHERE id={p} AND user_id={p}", (place_id, get_user_id()))
+    place = fetchone_as_dict(cursor)
+    if not place:
+        conn.close()
+        return redirect("/jobs")
+    month_filter = request.args.get("month", "")
+    if month_filter:
+        cursor.execute(f"SELECT * FROM job_shifts WHERE job_place_id={p} AND user_id={p} AND date LIKE {p} ORDER BY date DESC", (place_id, get_user_id(), f"{month_filter}%"))
+    else:
+        cursor.execute(f"SELECT * FROM job_shifts WHERE job_place_id={p} AND user_id={p} ORDER BY date DESC", (place_id, get_user_id()))
+    raw_shifts = fetchall_as_dict(cursor)
+    cursor.execute(f"SELECT DISTINCT substr(date,1,7) as ym FROM job_shifts WHERE job_place_id={p} AND user_id={p} ORDER BY ym DESC", (place_id, get_user_id()))
+    month_rows = fetchall_as_dict(cursor)
+    conn.close()
+    months = [r["ym"] for r in month_rows]
+    shifts = []
+    total_pay = 0
+    total_hours = 0
+    for s in raw_shifts:
+        pay, hours = calc_pay(s["start_time"], s["end_time"], place["hourly_wage"], place["late_night_wage"])
+        s["pay"] = pay
+        s["hours"] = hours
+        total_pay += pay
+        total_hours += hours
+        shifts.append(s)
+    return render_template("job_shifts.html", place=place, shifts=shifts, months=months, current_month=month_filter, total_pay=total_pay, total_hours=round(total_hours, 2))
+
+@app.route("/jobs/<int:place_id>/shifts/add", methods=["GET", "POST"])
+def add_job_shift(place_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT * FROM job_places WHERE id={p} AND user_id={p}", (place_id, get_user_id()))
+    place = fetchone_as_dict(cursor)
+    conn.close()
+    if not place:
+        return redirect("/jobs")
+    if request.method == "POST":
+        date_val = request.form["date"]
+        start_time = request.form["start_time"]
+        end_time = request.form["end_time"]
+        memo = request.form.get("memo", "")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"INSERT INTO job_shifts (job_place_id, date, start_time, end_time, memo, user_id) VALUES ({ph(6)})", (place_id, date_val, start_time, end_time, memo, get_user_id()))
+        conn.commit()
+        conn.close()
+        return redirect(f"/jobs/{place_id}/shifts")
+    return render_template("add_job_shift.html", place=place)
+
+@app.route("/jobs/<int:place_id>/shifts/delete/<int:shift_id>")
+def delete_job_shift(place_id, shift_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"DELETE FROM job_shifts WHERE id={p} AND user_id={p}", (shift_id, get_user_id()))
+    conn.commit()
+    conn.close()
+    return redirect(f"/jobs/{place_id}/shifts")
+
+@app.route("/salary")
+def salary():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    p = ph()
+    cursor.execute(f"SELECT * FROM job_places WHERE user_id={p}", (get_user_id(),))
+    places = fetchall_as_dict(cursor)
+    place_map = {pl["id"]: pl for pl in places}
+    cursor.execute(f"SELECT * FROM job_shifts WHERE user_id={p} ORDER BY date DESC", (get_user_id(),))
+    all_shifts = fetchall_as_dict(cursor)
+    conn.close()
+    grand_total_pay = 0
+    grand_total_hours = 0
+    place_totals = {}
+    monthly = {}
+    for s in all_shifts:
+        pl = place_map.get(s["job_place_id"])
+        if not pl:
+            continue
+        pay, hours = calc_pay(s["start_time"], s["end_time"], pl["hourly_wage"], pl["late_night_wage"])
+        s["pay"] = pay
+        s["hours"] = hours
+        s["place_name"] = pl["name"]
+        grand_total_pay += pay
+        grand_total_hours += hours
+        pname = pl["name"]
+        if pname not in place_totals:
+            place_totals[pname] = {"total_pay": 0, "total_hours": 0}
+        place_totals[pname]["total_pay"] += pay
+        place_totals[pname]["total_hours"] = round(place_totals[pname]["total_hours"] + hours, 2)
+        ym = s["date"][:7]
+        if ym not in monthly:
+            monthly[ym] = {"total_pay": 0, "total_hours": 0, "shifts": []}
+        monthly[ym]["total_pay"] += pay
+        monthly[ym]["total_hours"] = round(monthly[ym]["total_hours"] + hours, 2)
+        monthly[ym]["shifts"].append(s)
+    sorted_months = sorted(monthly.keys(), reverse=True)
+    return render_template("salary.html", grand_total_pay=grand_total_pay, grand_total_hours=round(grand_total_hours, 2), place_totals=place_totals, monthly=monthly, sorted_months=sorted_months)

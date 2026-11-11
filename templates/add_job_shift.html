@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - シフト追加</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .form-container { max-width: 500px; margin: 0 auto; padding: 20px 16px 80px; }
+        .form-header { background: linear-gradient(135deg, #2e8b57, #1a5c38); color: white; padding: 16px; text-align: center; }
+        .form-header h1 { font-size: 1.3rem; }
+        .form-header p { font-size: 0.8rem; opacity: 0.8; }
+        .form-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        .preview-box { background: #f0faf5; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+        .preview-box .pay-label { font-size: 0.8rem; color: #888; }
+        .preview-box .pay-num { font-size: 1.4rem; font-weight: bold; color: #2e8b57; }
+        .btn-submit { width: 100%; background: #2e8b57; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .back-link { display: inline-block; color: #888; text-decoration: none; font-size: 0.85rem; margin-bottom: 12px; }
+        .wage-row { display: flex; gap: 10px; font-size: 0.8rem; color: #888; margin-bottom: 8px; }
+    </style>
+</head>
+<body style="background:#f4f7f4; min-height:100vh;">
+    <div class="form-header">
+        <h1>➕ シフトを追加</h1>
+        <p>{{ place.name }}</p>
+    </div>
+    <div class="form-container">
+        <a href="/jobs/{{ place.id }}/shifts" class="back-link">← シフト一覧に戻る</a>
+        <div class="form-card">
+            <div class="wage-row">
+                <span>⏰ 通常 ¥{{ "{:,}".format(place.hourly_wage) }}/h</span>
+                <span>🌙 深夜 ¥{{ "{:,}".format(place.late_night_wage) }}/h</span>
+            </div>
+            <form method="POST" id="shiftForm">
+                <div class="form-group">
+                    <label>📅 日付</label>
+                    <input type="date" name="date" id="dateInput" required>
+                </div>
+                <div class="form-group">
+                    <label>🕐 開始時間</label>
+                    <input type="time" name="start_time" id="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>🕐 終了時間</label>
+                    <input type="time" name="end_time" id="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label>📝 メモ（任意）</label>
+                    <textarea name="memo" rows="2" placeholder="例：早番、夜勤など"></textarea>
+                </div>
+                <div class="preview-box" id="previewBox" style="display:none;">
+                    <div class="pay-label">予想給料</div>
+                    <div class="pay-num" id="previewPay">¥0</div>
+                    <div class="pay-label"><span id="previewHours">0</span>時間勤務</div>
+                </div>
+                <button type="submit" class="btn-submit">💾 シフトを追加する</button>
+            </form>
+        </div>
+    </div>
+    <nav class="bottom-nav">
+        <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+        <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
+        <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
+        <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    </nav>
+    <script>
+        const hourlyWage = {{ place.hourly_wage }};
+        const lateNightWage = {{ place.late_night_wage }};
+        document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+        function calcPay() {
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            if (!start || !end) { document.getElementById('previewBox').style.display = 'none'; return; }
+            let [sh, sm] = start.split(':').map(Number);
+            let [eh, em] = end.split(':').map(Number);
+            let startMin = sh * 60 + sm;
+            let endMin = eh * 60 + em;
+            if (endMin <= startMin) endMin += 24 * 60;
+            let totalPay = 0;
+            for (let m = startMin; m < endMin; m++) {
+                const hour = Math.floor(m / 60) % 24;
+                totalPay += (hour >= 22 || hour < 5) ? lateNightWage / 60 : hourlyWage / 60;
+            }
+            const hours = ((endMin - startMin) / 60).toFixed(2);
+            document.getElementById('previewPay').textContent = '¥' + Math.round(totalPay).toLocaleString();
+            document.getElementById('previewHours').textContent = hours;
+            document.getElementById('previewBox').style.display = 'block';
+        }
+        document.getElementById('startTime').addEventListener('change', calcPay);
+        document.getElementById('endTime').addEventListener('change', calcPay);
+    </script>
+</body>
+</html>

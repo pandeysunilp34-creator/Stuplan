@@ -10,6 +10,14 @@
     <header class="main-header"><h1>StuPlan</h1><p>{{ t.parttime_title }}</p></header>
     <main class="container schedule-container">
         <a href="/home" class="back-link">{{ t.back_home }}</a>
+        <div style="margin-bottom:12px;">
+            <a href="/jobs" style="display:inline-flex;align-items:center;gap:8px;background:#2e8b57;color:white;padding:10px 16px;border-radius:12px;text-decoration:none;font-size:.9rem;margin-bottom:4px;">
+                💼 バイト先・給料管理（新機能）
+            </a>
+            <a href="/salary" style="display:inline-flex;align-items:center;gap:8px;background:#1a73e8;color:white;padding:10px 16px;border-radius:12px;text-decoration:none;font-size:.9rem;margin-left:8px;">
+                💴 給料サマリー
+            </a>
+        </div>
         <section class="card schedule-card">
             <h2>💼 {{ t.parttime_sub }}</h2>
             {% if parttime_jobs %}
@@ -32,11 +40,11 @@
     </main>
     <footer class="main-footer"><p>&copy; 2026 StuPlan</p></footer>
     <nav class="bottom-nav">
-        <a href="/home" class="nav-item "><span class="nav-icon">🏠</span><span>Home</span></a>
-        <a href="/schedule" class="nav-item "><span class="nav-icon">📅</span><span>Schedule</span></a>
-        <a href="/homework" class="nav-item "><span class="nav-icon">📝</span><span>Homework</span></a>
+        <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+        <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
         <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
-        <a href="/dashboard" class="nav-item "><span class="nav-icon">📊</span><span>Dashboard</span></a>
+        <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
     </nav>
 </body>
 </html>

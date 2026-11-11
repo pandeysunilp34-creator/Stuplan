@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - シフト一覧</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .shifts-header{background:linear-gradient(135deg,#2e8b57,#1a5c38);color:white;padding:20px 16px;text-align:center}
+        .shifts-header h1{font-size:1.4rem;margin-bottom:4px}
+        .shifts-header p{font-size:.8rem;opacity:.8}
+        .container{max-width:650px;margin:0 auto;padding:16px 16px 90px}
+        .summary-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+        .summary-item{background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+        .summary-item .s-label{font-size:.75rem;color:#888;margin-bottom:4px}
+        .summary-item .s-value{font-size:1.2rem;font-weight:bold;color:#2e8b57}
+        .month-filter{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+        .month-btn{padding:6px 14px;border-radius:20px;border:1px solid #ddd;background:white;font-size:.8rem;cursor:pointer;white-space:nowrap;text-decoration:none;color:#555}
+        .month-btn.active{background:#2e8b57;color:white;border-color:#2e8b57}
+        .shift-card{background:white;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between}
+        .shift-left .shift-date{font-size:.85rem;color:#888;margin-bottom:2px}
+        .shift-left .shift-time{font-size:1rem;font-weight:bold;color:#333}
+        .shift-left .shift-memo{font-size:.75rem;color:#aaa;margin-top:2px}
+        .shift-right{text-align:right}
+        .shift-right .shift-pay{font-size:1.1rem;font-weight:bold;color:#2e8b57}
+        .shift-right .shift-hours{font-size:.8rem;color:#888}
+        .shift-right .del-btn{font-size:.75rem;color:#e74c3c;text-decoration:none;display:block;margin-top:4px}
+        .add-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:#2e8b57;color:white;padding:14px;border-radius:14px;text-decoration:none;font-size:1rem;font-weight:bold;margin-bottom:16px}
+        .back-link{color:#888;font-size:.85rem;text-decoration:none;display:inline-block;margin-bottom:12px}
+        .wage-info{background:#f0faf5;border-radius:10px;padding:10px 14px;font-size:.8rem;color:#555;margin-bottom:14px;display:flex;gap:16px}
+        .empty-state{text-align:center;padding:40px 20px;color:#888}
+    </style>
+</head>
+<body style="background:#f4f7f4;min-height:100vh;">
+<div class="shifts-header">
+    <h1>💼 {{ place.name }}</h1>
+    <p>シフト・給料管理</p>
+</div>
+<div class="container">
+    <a href="/jobs" class="back-link">← バイト先一覧</a>
+    <div class="wage-info">
+        <span>⏰ 通常 ¥{{ "{:,}".format(place.hourly_wage) }}/h</span>
+        <span>🌙 深夜 ¥{{ "{:,}".format(place.late_night_wage) }}/h</span>
+    </div>
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="s-label">合計給料</div>
+            <div class="s-value">¥{{ "{:,}".format(total_pay) }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="s-label">合計時間</div>
+            <div class="s-value">{{ total_hours }}h</div>
+        </div>
+        <div class="summary-item">
+            <div class="s-label">シフト数</div>
+            <div class="s-value">{{ shifts|length }}回</div>
+        </div>
+    </div>
+    {% if months %}
+    <div class="month-filter">
+        <a href="/jobs/{{ place.id }}/shifts" class="month-btn {% if not current_month %}active{% endif %}">すべて</a>
+        {% for m in months %}
+        <a href="/jobs/{{ place.id }}/shifts?month={{ m }}" class="month-btn {% if current_month == m %}active{% endif %}">{{ m }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <a href="/jobs/{{ place.id }}/shifts/add" class="add-btn">➕ シフトを追加</a>
+    {% if shifts %}
+    {% for s in shifts %}
+    <div class="shift-card">
+        <div class="shift-left">
+            <div class="shift-date">{{ s.date }}</div>
+            <div class="shift-time">{{ s.start_time }} 〜 {{ s.end_time }}</div>
+            {% if s.memo %}<div class="shift-memo">{{ s.memo }}</div>{% endif %}
+        </div>
+        <div class="shift-right">
+            <div class="shift-pay">¥{{ "{:,}".format(s.pay) }}</div>
+            <div class="shift-hours">{{ s.hours }}時間</div>
+            <a href="/jobs/{{ place.id }}/shifts/delete/{{ s.id }}" class="del-btn" onclick="return confirm('このシフトを削除しますか？')">🗑 削除</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <p>シフトがありません</p>
+        <p style="font-size:.85rem;margin-top:8px;">上のボタンからシフトを追加してください</p>
+    </div>
+    {% endif %}
+</div>
+<nav class="bottom-nav">
+    <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+    <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+    <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
+    <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
+    <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+</nav>
+</body>
+</html>

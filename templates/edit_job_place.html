@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan - バイト先編集</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .form-container{max-width:500px;margin:0 auto;padding:20px 16px 80px}
+        .form-header{background:linear-gradient(135deg,#2e8b57,#1a5c38);color:white;padding:16px;text-align:center}
+        .form-card{background:white;border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:16px}
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;font-size:.85rem;color:#555;margin-bottom:6px;font-weight:bold}
+        .form-group input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:1rem;box-sizing:border-box}
+        .btn-submit{width:100%;background:#2e8b57;color:white;border:none;padding:14px;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer}
+        .back-link{display:inline-block;color:#888;text-decoration:none;font-size:.85rem;margin-bottom:12px}
+        .hint{font-size:.75rem;color:#888;margin-top:4px}
+    </style>
+</head>
+<body style="background:#f4f7f4;min-height:100vh;">
+<div class="form-header"><h1>✏️ バイト先を編集</h1></div>
+<div class="form-container">
+    <a href="/jobs" class="back-link">← バイト先一覧に戻る</a>
+    <div class="form-card">
+        <form method="POST">
+            <div class="form-group">
+                <label>🏪 バイト先の名前</label>
+                <input type="text" name="name" value="{{ place.name }}" required>
+            </div>
+            <div class="form-group">
+                <label>💴 通常時給（円）</label>
+                <input type="number" name="hourly_wage" value="{{ place.hourly_wage }}" min="800" max="5000" step="10" required>
+                <p class="hint">5:00〜22:00の時給</p>
+            </div>
+            <div class="form-group">
+                <label>🌙 深夜時給（円）</label>
+                <input type="number" name="late_night_wage" value="{{ place.late_night_wage }}" min="800" max="6000" step="10" required>
+                <p class="hint">22:00〜翌5:00の時給</p>
+            </div>
+            <button type="submit" class="btn-submit">💾 保存する</button>
+        </form>
+    </div>
+</div>
+<nav class="bottom-nav">
+    <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+    <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+    <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
+    <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
+    <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+</nav>
+</body>
+</html>
