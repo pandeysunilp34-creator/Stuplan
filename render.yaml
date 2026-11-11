@@ -7,3 +7,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+
+  - type: cron
+    name: stuplan-keepalive
+    runtime: python
+    buildCommand: pip install requests
+    schedule: "*/5 * * * *"
+    startCommand: python -c "import requests; requests.get('https://stuplan.onrender.com')"
