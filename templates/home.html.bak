@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuPlan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .home-header {
+            background: linear-gradient(135deg, #2e8b57, #1a5c38);
+            color: white;
+            padding: 20px 16px 24px;
+            text-align: center;
+        }
+        .home-header h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 2px;
+        }
+        .home-header p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 12px;
+        }
+        .home-user-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .home-user-bar a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 6px 14px;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .home-user-bar a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        .home-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .home-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            text-decoration: none;
+            color: #1a1a1a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: block;
+        }
+        .home-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        .home-card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        .home-card-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        .home-card-desc {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .home-card-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            background: #2e8b57;
+        }
+        .home-card-badge.red { background: #c0392b; }
+        .home-card-badge.blue { background: #1a73e8; }
+        .home-card-badge.purple { background: #5B2D8E; }
+        .home-card-badge.orange { background: #e67e22; }
+        .home-card.wide {
+            grid-column: span 2;
+        }
+        @media (max-width: 400px) {
+            .home-grid {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+            .home-card.wide {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body style="background:#f4f7f4; min-height:100vh;">
+
+    <div class="home-header">
+        <h1>StuPlan</h1>
+        <p>Student + Plan</p>
+        {% if session.username %}
+        <div class="home-user-bar">
+            <a href="/profile">👤 {{ session.username }}</a>
+            <a href="/logout">
+                {% if lang == 'en' %}Logout{% elif lang == 'np' %}लगआउट{% else %}ログアウト{% endif %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="home-grid">
+
+        <a href="/schedule" class="home-card">
+            <div class="home-card-icon">📅</div>
+            <div class="home-card-title">{% if lang == 'en' %}Schedule{% elif lang == 'np' %}तालिका{% else %}Schedule{% endif %}</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Today's schedule{% elif lang == 'np' %}आजको तालिका{% else %}今日の予定{% endif %}</div>
+            <span class="home-card-badge">{{ schedule_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+        </a>
+
+        <a href="/homework" class="home-card">
+            <div class="home-card-icon">📝</div>
+            <div class="home-card-title">Homework</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Homework list{% elif lang == 'np' %}गृहकार्य{% else %}宿題一覧{% endif %}</div>
+            <span class="home-card-badge {% if homework_count > 0 %}red{% endif %}">
+                {% if lang == 'en' %}Pending {% elif lang == 'np' %}बाँकी {% else %}未完了 {% endif %}{{ homework_count }}{% if lang == 'en' %}{% elif lang == 'np' %} वटा{% else %}件{% endif %}
+            </span>
+        </a>
+
+        <a href="/parttime" class="home-card">
+            <div class="home-card-icon">💼</div>
+            <div class="home-card-title">Part-time Job</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Shift schedule{% elif lang == 'np' %}काम{% else %}シフト{% endif %}</div>
+            <span class="home-card-badge blue">{{ parttime_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+        </a>
+
+        <a href="/notification" class="home-card">
+            <div class="home-card-icon">🔔</div>
+            <div class="home-card-title">Notification</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Notifications{% elif lang == 'np' %}सूचना{% else %}通知{% endif %}</div>
+            <span class="home-card-badge orange">{{ notification_count }}{% if lang == 'en' %} items{% elif lang == 'np' %} वटा{% else %}件{% endif %}</span>
+        </a>
+
+        <a href="/calendar" class="home-card">
+            <div class="home-card-icon">📆</div>
+            <div class="home-card-title">Calendar</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Monthly calendar{% elif lang == 'np' %}क्यालेन्डर{% else %}月間カレンダー{% endif %}</div>
+        </a>
+
+        <a href="/dashboard" class="home-card">
+            <div class="home-card-icon">📊</div>
+            <div class="home-card-title">Dashboard</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Overview{% elif lang == 'np' %}समग्र{% else %}全体の状況{% endif %}</div>
+        </a>
+
+        <a href="/graph" class="home-card">
+            <div class="home-card-icon">📈</div>
+            <div class="home-card-title">Graph</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Data graphs{% elif lang == 'np' %}ग्राफ{% else %}グラフ{% endif %}</div>
+        </a>
+
+        <a href="/ai" class="home-card">
+            <div class="home-card-icon">🤖</div>
+            <div class="home-card-title">AI</div>
+            <div class="home-card-desc">{% if lang == 'en' %}AI advice{% elif lang == 'np' %}AI सल्लाह{% else %}AIアドバイス{% endif %}</div>
+        </a>
+
+        <a href="/resume" class="home-card">
+            <div class="home-card-icon">📄</div>
+            <div class="home-card-title">{% if lang == 'en' %}Resume{% elif lang == 'np' %}बायोडाटा{% else %}履歴書（入力）{% endif %}</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Create resume{% elif lang == 'np' %}भरेर बनाउनुस्{% else %}フォームから作成{% endif %}</div>
+        </a>
+
+        <a href="/resume/blank" class="home-card">
+            <div class="home-card-icon">📋</div>
+            <div class="home-card-title">{% if lang == 'en' %}Blank Resume{% elif lang == 'np' %}खाली बायोडाटा{% else %}空白の履歴書{% endif %}</div>
+            <div class="home-card-desc">{% if lang == 'en' %}Handwritten{% elif lang == 'np' %}हस्तलिखित{% else %}手書き用{% endif %}</div>
+        </a>
+
+    </div>
+
+    <footer style="text-align:center; padding:20px; color:#aaa; font-size:0.75rem;">
+        &copy; 2026 StuPlan
+    </footer>
+
+    <nav class="bottom-nav">
+        <a href="/home" class="nav-item active"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/schedule" class="nav-item "><span class="nav-icon">📅</span><span>Schedule</span></a>
+        <a href="/homework" class="nav-item "><span class="nav-icon">📝</span><span>Homework</span></a>
+        <a href="/parttime" class="nav-item "><span class="nav-icon">💼</span><span>Part-time</span></a>
+        <a href="/dashboard" class="nav-item "><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    </nav>
+</body>
+</html>
