@@ -48,6 +48,14 @@
                     <input type="time" name="end_time" id="endTime" required>
                 </div>
                 <div class="form-group">
+                    <label>☕ 休憩時間（分）</label>
+                    <input type="number" name="break_minutes" id="breakMinutes" value="0" min="0" max="180" placeholder="例：45">
+                </div>
+                <div class="form-group">
+                    <label>☕ 休憩時間（分）</label>
+                    <input type="number" name="break_minutes" id="breakMinutes" value="0" min="0" max="180" placeholder="例：45">
+                </div>
+                <div class="form-group">
                     <label>📝 メモ（任意）</label>
                     <textarea name="memo" rows="2" placeholder="例：早番、夜勤など"></textarea>
                 </div>
@@ -74,24 +82,28 @@
         function calcPay() {
             const start = document.getElementById('startTime').value;
             const end = document.getElementById('endTime').value;
+            const brk = parseInt(document.getElementById('breakMinutes').value) || 0;
             if (!start || !end) { document.getElementById('previewBox').style.display = 'none'; return; }
             let [sh, sm] = start.split(':').map(Number);
             let [eh, em] = end.split(':').map(Number);
             let startMin = sh * 60 + sm;
             let endMin = eh * 60 + em;
             if (endMin <= startMin) endMin += 24 * 60;
+            let workEndMin = endMin - brk;
             let totalPay = 0;
-            for (let m = startMin; m < endMin; m++) {
+            for (let m = startMin; m < workEndMin; m++) {
                 const hour = Math.floor(m / 60) % 24;
                 totalPay += (hour >= 22 || hour < 5) ? lateNightWage / 60 : hourlyWage / 60;
             }
-            const hours = ((endMin - startMin) / 60).toFixed(2);
+            const totalHours = ((endMin - startMin) / 60).toFixed(2);
+            const workHours = ((workEndMin - startMin) / 60).toFixed(2);
             document.getElementById('previewPay').textContent = '¥' + Math.round(totalPay).toLocaleString();
-            document.getElementById('previewHours').textContent = hours;
+            document.getElementById('previewHours').textContent = '実働' + workHours + '時間（拘束' + totalHours + '時間）';
             document.getElementById('previewBox').style.display = 'block';
         }
         document.getElementById('startTime').addEventListener('change', calcPay);
         document.getElementById('endTime').addEventListener('change', calcPay);
+        document.getElementById('breakMinutes').addEventListener('input', calcPay);
     </script>
 </body>
 </html>

@@ -3,96 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StuPlan - シフト一覧</title>
+    <title>StuPlan - {{ place.name }} 勤務実績</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .shifts-header{background:linear-gradient(135deg,#2e8b57,#1a5c38);color:white;padding:20px 16px;text-align:center}
-        .shifts-header h1{font-size:1.4rem;margin-bottom:4px}
-        .shifts-header p{font-size:.8rem;opacity:.8}
-        .container{max-width:650px;margin:0 auto;padding:16px 16px 90px}
-        .summary-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-        .summary-item{background:white;border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.07)}
-        .summary-item .s-label{font-size:.75rem;color:#888;margin-bottom:4px}
-        .summary-item .s-value{font-size:1.2rem;font-weight:bold;color:#2e8b57}
-        .month-filter{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
-        .month-btn{padding:6px 14px;border-radius:20px;border:1px solid #ddd;background:white;font-size:.8rem;cursor:pointer;white-space:nowrap;text-decoration:none;color:#555}
-        .month-btn.active{background:#2e8b57;color:white;border-color:#2e8b57}
-        .shift-card{background:white;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between}
-        .shift-left .shift-date{font-size:.85rem;color:#888;margin-bottom:2px}
-        .shift-left .shift-time{font-size:1rem;font-weight:bold;color:#333}
-        .shift-left .shift-memo{font-size:.75rem;color:#aaa;margin-top:2px}
-        .shift-right{text-align:right}
-        .shift-right .shift-pay{font-size:1.1rem;font-weight:bold;color:#2e8b57}
-        .shift-right .shift-hours{font-size:.8rem;color:#888}
-        .shift-right .del-btn{font-size:.75rem;color:#e74c3c;text-decoration:none;display:block;margin-top:4px}
-        .add-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:#2e8b57;color:white;padding:14px;border-radius:14px;text-decoration:none;font-size:1rem;font-weight:bold;margin-bottom:16px}
-        .back-link{color:#888;font-size:.85rem;text-decoration:none;display:inline-block;margin-bottom:12px}
-        .wage-info{background:#f0faf5;border-radius:10px;padding:10px 14px;font-size:.8rem;color:#555;margin-bottom:14px;display:flex;gap:16px}
-        .empty-state{text-align:center;padding:40px 20px;color:#888}
+        :root {
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+            --header-bg: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --text: #1e1b4b;
+            --sub: #6b7280;
+            --border: #e5e7eb;
+            --sat: #2563eb;
+            --sun: #dc2626;
+        }
+        body { background: #f1f5f9; min-height: 100vh; }
+        .page-header { background: var(--header-bg); color: white; padding: 20px 16px 16px; }
+        .page-header .back { color: rgba(255,255,255,0.75); font-size: 0.8rem; text-decoration: none; display: block; margin-bottom: 8px; }
+        .page-header h1 { font-size: 1.3rem; font-weight: 700; margin: 0 0 2px; }
+        .page-header p { font-size: 0.8rem; opacity: 0.8; margin: 0; }
+        .container { max-width: 700px; margin: 0 auto; padding: 16px; padding-bottom: 90px; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .s-card { background: white; border-radius: 12px; padding: 12px 10px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+        .s-card .val { font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
+        .s-card .lbl { font-size: 0.7rem; color: var(--sub); margin-top: 2px; }
+        .wage-bar { background: var(--accent-light); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 20px; font-size: 0.82rem; color: var(--text); }
+        .action-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .month-form { display: flex; gap: 6px; align-items: center; }
+        .month-form input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; }
+        .month-form button { background: white; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .clear-link { color: var(--sub); font-size: 0.8rem; text-decoration: none; }
+        .table-wrap { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.08); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 520px; }
+        thead th { background: #1e1b4b; color: white; font-size: 0.75rem; font-weight: 600; padding: 10px 8px; text-align: center; white-space: nowrap; }
+        tbody tr:nth-child(odd) { background: #f9fafb; }
+        tbody tr:nth-child(even) { background: #ffffff; }
+        tbody tr:hover { background: var(--accent-light); }
+        td { padding: 9px 8px; font-size: 0.82rem; text-align: center; border-bottom: 1px solid #f3f4f6; white-space: nowrap; color: #374151; }
+        td.date-cell { font-weight: 600; color: #1f2937; }
+        td.sat { color: var(--sat); font-weight: 700; }
+        td.sun { color: var(--sun); font-weight: 700; }
+        td.pay-cell { font-weight: 700; color: var(--accent); }
+        td.work-cell { font-weight: 600; color: #059669; }
+        td.memo-cell { font-size: 0.75rem; color: var(--sub); text-align: left; max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+        tfoot td { background: #1e1b4b; color: white; font-weight: 700; font-size: 0.82rem; padding: 10px 8px; text-align: center; }
+        .del-btn { color: #ef4444; font-size: 0.75rem; text-decoration: none; padding: 2px 6px; border-radius: 4px; }
+        .empty { text-align: center; padding: 40px 20px; color: var(--sub); }
+        .empty .icon { font-size: 2.5rem; margin-bottom: 10px; }
     </style>
 </head>
-<body style="background:#f4f7f4;min-height:100vh;">
-<div class="shifts-header">
-    <h1>💼 {{ place.name }}</h1>
-    <p>シフト・給料管理</p>
-</div>
-<div class="container">
-    <a href="/jobs" class="back-link">← バイト先一覧</a>
-    <div class="wage-info">
-        <span>⏰ 通常 ¥{{ "{:,}".format(place.hourly_wage) }}/h</span>
-        <span>🌙 深夜 ¥{{ "{:,}".format(place.late_night_wage) }}/h</span>
+<body>
+    <div class="page-header">
+        <a href="/jobs" class="back">← バイト先一覧</a>
+        <h1>💼 {{ place.name }}</h1>
+        <p>勤務実績一覧</p>
     </div>
-    <div class="summary-bar">
-        <div class="summary-item">
-            <div class="s-label">合計給料</div>
-            <div class="s-value">¥{{ "{:,}".format(total_pay) }}</div>
+    <div class="container">
+        <div class="summary-grid">
+            <div class="s-card">
+                <div class="val">¥{{ "{:,}".format(total_pay) }}</div>
+                <div class="lbl">{% if month_filter %}{{ month_filter }}{% else %}全期間{% endif %} 合計給料</div>
+            </div>
+            <div class="s-card">
+                <div class="val">{{ total_work_hours }}h</div>
+                <div class="lbl">実働時間</div>
+            </div>
+            <div class="s-card">
+                <div class="val">{{ shifts|length }}</div>
+                <div class="lbl">勤務日数</div>
+            </div>
         </div>
-        <div class="summary-item">
-            <div class="s-label">合計時間</div>
-            <div class="s-value">{{ total_hours }}h</div>
+        <div class="wage-bar">
+            <span>⏰ 通常時給 ¥{{ "{:,}".format(place.hourly_wage) }}</span>
+            <span>🌙 深夜時給 ¥{{ "{:,}".format(place.late_night_wage) }}</span>
         </div>
-        <div class="summary-item">
-            <div class="s-label">シフト数</div>
-            <div class="s-value">{{ shifts|length }}回</div>
+        <div class="action-bar">
+            <a href="/jobs/{{ place.id }}/shifts/add" class="btn-add">＋ シフト追加</a>
+            <form method="GET" class="month-form">
+                <input type="month" name="month" value="{{ month_filter }}">
+                <button type="submit">絞込</button>
+                {% if month_filter %}<a href="/jobs/{{ place.id }}/shifts" class="clear-link">クリア</a>{% endif %}
+            </form>
         </div>
+        {% if shifts %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日付</th>
+                        <th>曜</th>
+                        <th>出勤</th>
+                        <th>退勤</th>
+                        <th>休憩</th>
+                        <th>実働</th>
+                        <th>給料</th>
+                        <th>メモ</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in shifts %}
+                    {% set wd = s.weekday %}
+                    <tr>
+                        <td class="date-cell">{{ s.date }}</td>
+                        <td class="{% if wd == '土' %}sat{% elif wd == '日' %}sun{% endif %}">{{ wd }}</td>
+                        <td>{{ s.start_time }}</td>
+                        <td>{{ s.end_time }}</td>
+                        <td>{% if s.break_minutes and s.break_minutes > 0 %}{{ s.break_minutes }}分{% else %}—{% endif %}</td>
+                        <td class="work-cell">{{ s.work_hours }}h</td>
+                        <td class="pay-cell">¥{{ "{:,}".format(s.pay) }}</td>
+                        <td class="memo-cell">{{ s.memo or '' }}</td>
+                        <td><a href="/jobs/{{ place.id }}/shifts/delete/{{ s.id }}" class="del-btn" onclick="return confirm('削除しますか？')">🗑</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" style="text-align:right;">合計</td>
+                        <td>{{ total_work_hours }}h</td>
+                        <td>¥{{ "{:,}".format(total_pay) }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty">
+            <div class="icon">📋</div>
+            <p>シフトがまだありません</p>
+            <p style="font-size:0.8rem; margin-top:6px;">「＋ シフト追加」から入力してください</p>
+        </div>
+        {% endif %}
     </div>
-    {% if months %}
-    <div class="month-filter">
-        <a href="/jobs/{{ place.id }}/shifts" class="month-btn {% if not current_month %}active{% endif %}">すべて</a>
-        {% for m in months %}
-        <a href="/jobs/{{ place.id }}/shifts?month={{ m }}" class="month-btn {% if current_month == m %}active{% endif %}">{{ m }}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
-    <a href="/jobs/{{ place.id }}/shifts/add" class="add-btn">➕ シフトを追加</a>
-    {% if shifts %}
-    {% for s in shifts %}
-    <div class="shift-card">
-        <div class="shift-left">
-            <div class="shift-date">{{ s.date }}</div>
-            <div class="shift-time">{{ s.start_time }} 〜 {{ s.end_time }}</div>
-            {% if s.memo %}<div class="shift-memo">{{ s.memo }}</div>{% endif %}
-        </div>
-        <div class="shift-right">
-            <div class="shift-pay">¥{{ "{:,}".format(s.pay) }}</div>
-            <div class="shift-hours">{{ s.hours }}時間</div>
-            <a href="/jobs/{{ place.id }}/shifts/delete/{{ s.id }}" class="del-btn" onclick="return confirm('このシフトを削除しますか？')">🗑 削除</a>
-        </div>
-    </div>
-    {% endfor %}
-    {% else %}
-    <div class="empty-state">
-        <p>シフトがありません</p>
-        <p style="font-size:.85rem;margin-top:8px;">上のボタンからシフトを追加してください</p>
-    </div>
-    {% endif %}
-</div>
-<nav class="bottom-nav">
-    <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
-    <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
-    <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
-    <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
-    <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
-</nav>
+    <nav class="bottom-nav">
+        <a href="/home" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+        <a href="/schedule" class="nav-item"><span class="nav-icon">📅</span><span>Schedule</span></a>
+        <a href="/homework" class="nav-item"><span class="nav-icon">📝</span><span>Homework</span></a>
+        <a href="/parttime" class="nav-item active"><span class="nav-icon">💼</span><span>Part-time</span></a>
+        <a href="/dashboard" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    </nav>
 </body>
 </html>
